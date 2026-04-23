@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { businesses, conversations, messages } from "@/lib/db/schema";
-import { eq, and, desc, gte } from "drizzle-orm";
+import { eq, and, desc, gte, sql } from "drizzle-orm";
 
 // GET /api/analytics/export — Export conversations as CSV or JSON
 export async function GET(req: Request) {
@@ -27,71 +27,44 @@ export async function GET(req: Request) {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    // Fetch conversations with messages
+    // Fetch conversations with contact info
     const convos = await db
         .select()
         .from(conversations)
         .where(and(
             eq(conversations.businessId, business.id),
-            gte(conversations.createdAt, since)
+            gte(conversations.createdAt, since),
+            sql`(${conversations.customerEmail} IS NOT NULL OR ${conversations.customerPhone} IS NOT NULL)`
         ))
         .orderBy(desc(conversations.createdAt));
 
-    const exportData = await Promise.all(
-        convos.map(async (convo) => {
-            const msgs = await db
-                .select()
-                .from(messages)
-                .where(eq(messages.conversationId, convo.id))
-                .orderBy(messages.createdAt);
-
-            return {
-                conversationId: convo.id,
-                customerName: convo.customerName || "Anonymous",
-                customerEmail: convo.customerEmail || "",
-                status: convo.status,
-                rating: convo.rating,
-                summary: convo.summary || "",
-                messageCount: msgs.length,
-                startedAt: convo.createdAt,
-                messages: msgs.map((m) => ({
-                    role: m.role,
-                    content: m.content,
-                    sentiment: m.sentiment,
-                    timestamp: m.createdAt,
-                })),
-            };
-        })
-    );
+    const exportData = convos.map((convo) => ({
+        id: convo.id,
+        name: convo.customerName || "Anonymous",
+        email: convo.customerEmail || "N/A",
+        phone: convo.customerPhone || "N/A",
+        createdAt: convo.createdAt,
+    }));
 
     if (format === "csv") {
-        // Flatten for CSV export
-        const rows = exportData.flatMap((c) =>
-            c.messages.map((m) => [
-                c.conversationId,
-                c.customerName,
-                c.customerEmail,
-                c.status,
-                c.rating ?? "",
-                m.role,
-                `"${m.content.replace(/"/g, '""')}"`,
-                m.sentiment ?? "",
-                m.timestamp,
-            ].join(","))
-        );
+        const headers = ["id", "customer_name", "customer_email", "customer_phone", "created_at"];
+        const rows = exportData.map((c) => [
+            c.id,
+            `"${c.name.replace(/"/g, '""')}"`,
+            c.email,
+            c.phone,
+            c.createdAt?.toISOString() || "",
+        ].join(","));
 
-        const csv = [
-            "conversation_id,customer_name,customer_email,status,rating,role,content,sentiment,timestamp",
-            ...rows,
-        ].join("\n");
+        const csv = [headers.join(","), ...rows].join("\n");
 
         return new Response(csv, {
             headers: {
                 "Content-Type": "text/csv",
-                "Content-Disposition": `attachment; filename="conversations-${business.slug}-${new Date().toISOString().slice(0, 10)}.csv"`,
+                "Content-Disposition": `attachment; filename="customer-data-${business.slug}-${new Date().toISOString().slice(0, 10)}.csv"`,
             },
         });
     }
 
-    return NextResponse.json({ conversations: exportData, exported: exportData.length });
+    return NextResponse.json({ customers: exportData, count: exportData.length });
 }

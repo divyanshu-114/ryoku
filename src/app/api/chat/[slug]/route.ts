@@ -156,11 +156,18 @@ export async function POST(
                     }
                 }
 
+                let calculatedSentiment: "positive" | "neutral" | "negative" | "frustrated" = "neutral";
+                if (userMessage) {
+                    calculatedSentiment = analyzeSentiment(userMessage);
+                    userSentiment = calculatedSentiment;
+                }
+
                 // Insert user message to DB and get its ID
                 const [savedUserMsg] = await db.insert(dbMessages).values({
                     conversationId,
                     role: "user",
                     content: userMessage,
+                    sentiment: calculatedSentiment,
                 }).returning();
 
                 // Trigger real-time event for agents with exact ID
@@ -168,6 +175,7 @@ export async function POST(
                     id: savedUserMsg.id,
                     role: "user",
                     content: userMessage,
+                    sentiment: calculatedSentiment,
                 });
             }
 
@@ -190,10 +198,6 @@ export async function POST(
                         );
                     }
                 }
-            }
-
-            if (userMessage) {
-                userSentiment = analyzeSentiment(userMessage);
             }
         } catch (err) {
             console.error("[RAG] Error:", err);

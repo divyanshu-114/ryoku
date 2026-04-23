@@ -197,25 +197,46 @@ export default function AnalyticsPage() {
                             <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Daily Conversations</span>
                         </div>
                         {daily.length === 0 ? (
-                            <p className="text-sm text-[var(--text-muted)]">No data yet.</p>
+                            <div className="h-40 flex flex-col items-center justify-center border border-dashed border-[var(--border-subtle)] rounded-lg">
+                                <MessageSquare className="w-8 h-8 text-[var(--text-muted)] mb-2 opacity-20" />
+                                <p className="text-sm text-[var(--text-muted)]">No data for this period.</p>
+                            </div>
                         ) : (
-                            <div className="flex items-end gap-1 h-40">
-                                {daily.map((d) => (
-                                    <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                                        <span className="text-[10px] text-[var(--text-muted)]">{Number(d.count)}</span>
-                                        <div
-                                            className="w-full rounded-t-md transition-all"
-                                            style={{
-                                                height: `${(Number(d.count) / maxDaily) * 100}%`,
-                                                minHeight: 4,
-                                                background: "linear-gradient(180deg, var(--accent), var(--accent-glow))",
-                                            }}
-                                        />
-                                        <span className="text-[9px] text-[var(--text-muted)] -rotate-45 origin-top-left whitespace-nowrap">
-                                            {new Date(d.date).toLocaleDateString("en", { month: "short", day: "numeric" })}
-                                        </span>
-                                    </div>
-                                ))}
+                            <div className="flex items-end gap-2 h-48 pt-4 pb-6 mt-2">
+                                {daily.map((d, i) => {
+                                    const countVal = Number(d.count) || 0;
+                                    const barHeight = maxDaily > 0 ? (countVal / maxDaily) * 100 : 0;
+                                    const dateObj = new Date(d.date);
+                                    const label = isNaN(dateObj.getTime()) ? d.date : dateObj.toLocaleDateString("en", { month: "short", day: "numeric" });
+                                    
+                                    return (
+                                        <div key={d.date || i} className="flex-1 flex flex-col items-center justify-end gap-1 group relative h-full">
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)] text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-sm">
+                                                {countVal} msgs
+                                            </div>
+                                            <span className="text-[10px] text-[var(--text-muted)] font-medium z-10">{countVal}</span>
+                                            
+                                            {/* Bar Track Wrapper */}
+                                            <div className="w-full max-w-[32px] flex-1 flex flex-col justify-end">
+                                                <div
+                                                    className="w-full rounded-t-sm transition-all duration-500 ease-out hover:brightness-125 cursor-help"
+                                                    style={{
+                                                        height: `${Math.max(barHeight, 4)}%`,
+                                                        background: "linear-gradient(180deg, var(--accent), var(--accent-glow))",
+                                                        boxShadow: countVal > 0 ? "0 0 10px var(--accent-glow)" : "none"
+                                                    }}
+                                                />
+                                            </div>
+
+                                            {/* Label Wrapper to prevent overlap */}
+                                            <div className="h-6 relative w-full flex justify-center mt-1">
+                                                <span className="absolute top-0 text-[9px] text-[var(--text-muted)] -rotate-45 whitespace-nowrap text-right pr-1">
+                                                    {label}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -272,8 +293,8 @@ export default function AnalyticsPage() {
 
                 {/* Quick Links */}
                 <div className="flex gap-4">
-                    <button onClick={() => handleExport("json")} className="btn-secondary py-3 px-6 text-sm flex items-center gap-2">
-                        <Download className="w-4 h-4" /> Export JSON
+                    <button onClick={() => handleExport("csv")} className="btn-secondary py-3 px-6 text-sm flex items-center gap-2">
+                        <Download className="w-4 h-4" /> Export Customer Data
                     </button>
                 </div>
                 </div>
