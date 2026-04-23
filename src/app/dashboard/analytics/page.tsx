@@ -12,9 +12,10 @@ import {
     Star,
     AlertTriangle,
     Download,
-    ArrowLeft,
     Loader2,
     Activity,
+    CheckCircle2,
+    RefreshCw,
 } from "lucide-react";
 import { showToast } from "@/lib/toast";
 
@@ -22,6 +23,7 @@ interface Stats {
     totalConversations: number;
     activeConversations: number;
     escalatedCount: number;
+    resolvedCount: number;
     totalMessages: number;
     avgRating: number | null;
     ratedCount: number;
@@ -47,6 +49,7 @@ export default function AnalyticsPage() {
     const router = useRouter();
     const [period, setPeriod] = useState("7d");
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState<Stats | null>(null);
     const [daily, setDaily] = useState<DailyData[]>([]);
     const [events, setEvents] = useState<EventBreakdown[]>([]);
@@ -56,28 +59,31 @@ export default function AnalyticsPage() {
         if (status === "unauthenticated") router.push("/auth/login");
     }, [status, router]);
 
-    useEffect(() => {
-        async function fetchAnalytics() {
-            setLoading(true);
-            try {
-                const res = await fetch(`/api/analytics?period=${period}`);
-                if (!res.ok) throw new Error("Failed to load analytics");
-                const data = await res.json();
-                setStats(data.stats);
-                setDaily(data.dailyConversations || []);
-                setEvents(data.eventBreakdown || []);
-                setSentiment(data.sentimentBreakdown || []);
-            } catch (err) {
-                showToast(err instanceof Error ? err.message : "Failed to load analytics", "error");
-                setStats(null);
-                setDaily([]);
-                setEvents([]);
-                setSentiment([]);
-            } finally {
-                setLoading(false);
-            }
+    const fetchAnalytics = async (isRefresh = false) => {
+        if (isRefresh) setRefreshing(true); else setLoading(true);
+        try {
+            const res = await fetch(`/api/analytics?period=${period}`);
+            if (!res.ok) throw new Error("Failed to load analytics");
+            const data = await res.json();
+            setStats(data.stats);
+            setDaily(data.dailyConversations || []);
+            setEvents(data.eventBreakdown || []);
+            setSentiment(data.sentimentBreakdown || []);
+        } catch (err) {
+            if (!isRefresh) showToast(err instanceof Error ? err.message : "Failed to load analytics", "error");
+            if (!isRefresh) { setStats(null); setDaily([]); setEvents([]); setSentiment([]); }
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-        fetchAnalytics();
+    };
+
+    useEffect(() => { fetchAnalytics(); }, [period]);
+
+    // Auto-refresh every 60s
+    useEffect(() => {
+        const interval = setInterval(() => fetchAnalytics(true), 60000);
+        return () => clearInterval(interval);
     }, [period]);
 
     const handleExport = async (format: string) => {
@@ -112,18 +118,13 @@ export default function AnalyticsPage() {
     const totalSentiment = sentiment.reduce((sum, s) => sum + Number(s.count), 0);
 
     return (
-        <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
+        <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
             <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
-            <div className="max-w-6xl mx-auto relative z-10 space-y-8">
+            <div className="flex-1 overflow-y-auto pt-20 px-6 pb-20 scroll-smooth">
+                <div className="max-w-6xl mx-auto w-full relative z-10 pr-2 pb-10 space-y-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
-                        <button
-                            onClick={() => router.push("/dashboard")}
-                            className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition mb-3 cursor-pointer"
-                        >
-                            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
-                        </button>
                         <div className="flex items-center gap-2 mb-1">
                             <BarChart3 className="w-4 h-4 text-[var(--accent)]" />
                             <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Analytics</span>
@@ -144,6 +145,14 @@ export default function AnalyticsPage() {
                                 {p === "7d" ? "7 Days" : p === "30d" ? "30 Days" : "90 Days"}
                             </button>
                         ))}
+                        {/* Refresh */}
+                        <button
+                            onClick={() => fetchAnalytics(true)}
+                            className="btn-secondary py-2 px-4 text-xs flex items-center gap-2"
+                            disabled={refreshing}
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} /> {refreshing ? "" : "Refresh"}
+                        </button>
                         {/* Export */}
                         <button
                             onClick={() => handleExport("csv")}
@@ -155,10 +164,11 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {[
                         { label: "Conversations", value: stats?.totalConversations || 0, icon: MessageSquare, color: "var(--accent)" },
                         { label: "Messages", value: stats?.totalMessages || 0, icon: Activity, color: "var(--accent-light)" },
+                        { label: "Resolved", value: stats?.resolvedCount || 0, icon: CheckCircle2, color: "var(--success)" },
                         { label: "Avg. CSAT", value: stats?.avgRating ? `${stats.avgRating}/5` : "—", icon: Star, color: "#f59e0b" },
                         { label: "Escalated", value: stats?.escalatedCount || 0, icon: AlertTriangle, color: "var(--danger)" },
                     ].map((stat, i) => (
@@ -262,12 +272,10 @@ export default function AnalyticsPage() {
 
                 {/* Quick Links */}
                 <div className="flex gap-4">
-                    <button onClick={() => router.push("/dashboard/conversations")} className="btn-secondary py-3 px-6 text-sm flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" /> View Conversations
-                    </button>
                     <button onClick={() => handleExport("json")} className="btn-secondary py-3 px-6 text-sm flex items-center gap-2">
                         <Download className="w-4 h-4" /> Export JSON
                     </button>
+                </div>
                 </div>
             </div>
         </main>

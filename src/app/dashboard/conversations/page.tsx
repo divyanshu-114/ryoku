@@ -87,17 +87,20 @@ export default function ConversationsPage() {
     }
 
     return (
-        <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
+        <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
+            <header className="sticky top-14 z-40 px-4 py-3 flex items-center justify-between shrink-0" style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border-subtle)" }}>
+                <button
+                    onClick={() => router.push("/dashboard")}
+                    className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+                </button>
+            </header>
             <div className="ambient-glow" style={{ top: "-100px", left: "-100px" }} />
-            <div className="max-w-5xl mx-auto relative z-10 space-y-6">
+            <div className="flex-1 overflow-y-auto pt-8 px-4 pb-20 scroll-smooth">
+                <div className="max-w-5xl mx-auto w-full relative z-10 space-y-6">
                 {/* Header */}
                 <div>
-                    <button
-                        onClick={() => router.push("/dashboard")}
-                        className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition mb-3 cursor-pointer"
-                    >
-                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
-                    </button>
                     <div className="flex items-center gap-2 mb-1">
                         <MessageSquare className="w-4 h-4 text-[var(--accent)]" />
                         <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Conversations</span>
@@ -209,6 +212,7 @@ export default function ConversationsPage() {
                         ))}
                     </div>
                 )}
+                </div>
             </div>
         </main>
     );

@@ -4,7 +4,7 @@ import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Ryoku — AI Customer Service for Every Business",
+  title: "Ryoku — Create Chatbots for Your Business at one Click",
   description:
     "Create AI-powered customer service chatbots in minutes. Handle returns, orders, exchanges, and live agent escalation. Built for businesses of every size.",
   keywords: [
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     "customer support",
   ],
   openGraph: {
-    title: "Ryoku — AI Customer Service for Every Business",
+    title: "Ryoku — Create Chatbots for Your Business at one Click",
     description: "Create AI-powered customer service chatbots in minutes.",
     type: "website",
   },

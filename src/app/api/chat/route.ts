@@ -177,6 +177,32 @@ export async function POST(req: Request) {
                     await db.update(conversations)
                         .set({ updatedAt: new Date() })
                         .where(eq(conversations.id, conversationId));
+
+                    // ── Agent Takeover Check ──
+                    if (existing[0].assignedAgent) {
+                        await db.insert(dbMessages).values({
+                            conversationId,
+                            role: "user",
+                            content: userMessage,
+                        });
+
+                        await triggerConversationMessage(conversationId, {
+                            role: "user",
+                            content: userMessage,
+                        });
+
+                        return new Response(
+                            new ReadableStream({
+                                start(controller) { controller.close(); },
+                            }),
+                            {
+                                headers: {
+                                    "Content-Type": "text/plain; charset=utf-8",
+                                    "Access-Control-Allow-Origin": "*",
+                                },
+                            }
+                        );
+                    }
                 }
 
                 // Insert user message to DB
@@ -312,60 +338,9 @@ Welcome message: ${welcomeMessage}`;
                         }),
                         // @ts-expect-error Zod type mismatch with AI SDK
                         execute: async ({ reason }: { reason?: string }) => {
-                            // Check for online agents
-                            const onlineAgents = await db
-                                .select()
-                                .from(agents)
-                                .where(
-                                    and(
-                                        eq(agents.businessId, business.id),
-                                        eq(agents.status, "online")
-                                    )
-                                );
-
-                            if (onlineAgents.length > 0) {
-                                if (conversationId) {
-                                    await db.update(conversations)
-                                        .set({ status: "escalated", updatedAt: new Date() })
-                                        .where(eq(conversations.id, conversationId));
-
-                                    await db.insert(analyticsEvents).values({
-                                        businessId: business.id,
-                                        event: "escalated",
-                                        data: { conversationId, reason, online: true },
-                                    });
-
-                                    await triggerHandoff(business.id, conversationId, reason);
-                                }
-
-                                return {
-                                    escalated: true,
-                                    online: true,
-                                    reason,
-                                    message: "I've notified our support team. An agent will be with you shortly.",
-                                };
-                            }
-
-                            if (conversationId) {
-                                await db.update(conversations)
-                                    .set({ status: "escalated", updatedAt: new Date() })
-                                    .where(eq(conversations.id, conversationId));
-
-                                await db.insert(analyticsEvents).values({
-                                    businessId: business.id,
-                                    event: "escalated",
-                                    data: { conversationId, reason, online: false },
-                                });
-
-                                await triggerHandoff(business.id, conversationId, reason);
-                            }
-
-                            const email = config.escalationEmail || "our support team";
                             return {
-                                escalated: true,
-                                online: false,
-                                reason,
-                                message: `It looks like our team is currently away. Please send an email to ${email} and we'll get back to you as soon as possible.`,
+                                escalated: false,
+                                message: "To connect with a human agent, please click the 'Real Agent' button at the top of the chat to verify your email address.",
                             };
                         },
                     }),
@@ -394,18 +369,14 @@ Welcome message: ${welcomeMessage}`;
                 onFinish: async ({ text, toolCalls, toolResults }) => {
                     if (conversationId) {
                         if (lowConfidence && userSentiment === "frustrated") {
-                            await db.update(conversations)
-                                .set({ status: "escalated", updatedAt: new Date() })
-                                .where(eq(conversations.id, conversationId));
-
-                            await logAnalyticsEvent(business.id, "smart_handoff_triggered", {
+                            await logAnalyticsEvent(business.id, "smart_handoff_suggested", {
                                 conversationId,
                                 topSimilarity,
                                 threshold: autoHandoffThreshold,
                                 userSentiment,
                             });
-                            
-                            await triggerHandoff(business.id, conversationId, "Smart handoff triggered");
+                            // System prompt already instructs the LLM to proactively offer handoff, 
+                            // and the LLM will now tell them to use the UI button via the escalateToAgent tool or its own text.
                         }
 
                         await db.insert(dbMessages).values({

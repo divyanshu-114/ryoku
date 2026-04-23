@@ -68,6 +68,7 @@ export async function POST(req: Request) {
 
     // Push real-time message to conversation channel
     await triggerConversationMessage(conversationId, {
+        id: savedMsg.id,
         role: "agent",
         content,
         sender: agent.displayName,

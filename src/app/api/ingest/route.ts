@@ -101,15 +101,13 @@ export async function POST(req: Request) {
         },
         businessHours: config.businessHours || "Not specified",
         escalationEmail: config.escalationEmail || "",
-        canProcessReturns: config.canProcessReturns || "No",
-        canLookupOrders: config.canLookupOrders || "No",
         websiteUrl: config.websiteUrl || "",
         // Store all extra business-type-specific fields
         ...Object.fromEntries(
             Object.entries(config).filter(([k]) =>
                 !["businessName", "businessType", "faqs", "faqFile", "accentColor",
                     "welcomeMessage", "personaName", "personality", "capabilities",
-                    "businessHours", "escalationEmail", "canProcessReturns", "canLookupOrders",
+                    "businessHours", "escalationEmail",
                     "websiteUrl"].includes(k)
             )
         ),

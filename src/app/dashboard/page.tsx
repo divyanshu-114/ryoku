@@ -26,12 +26,12 @@ import {
     Bot,
     AlertCircle,
     BarChart3,
-    MessageSquare,
-    CreditCard,
+
+
     CalendarDays,
     Globe,
     TrendingUp,
-    HelpingHand,
+
     BadgeCheck,
     Rocket,
     Laptop,
@@ -511,37 +511,18 @@ export default function DashboardPage() {
         switch (step) {
             case 0: // Business Info
                 return (
-                    <div className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Business Name *</label>
-                            <input
-                                className="input-field"
-                                placeholder="Your Business Name"
-                                value={config.businessName}
-                                onChange={(e) => updateConfig("businessName", e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">Business Type *</label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {BUSINESS_TYPES.map((bt) => (
-                                    <button
-                                        key={bt.id}
-                                        onClick={() => updateConfig("businessType", bt.id)}
-                                        className={`p-4 rounded-xl text-left transition-all cursor-pointer ${config.businessType === bt.id
-                                            ? "ring-2 ring-[var(--accent)] bg-[var(--accent-glow)]"
-                                            : "bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)]"
-                                            }`}
-                                        style={{ border: config.businessType === bt.id ? "1px solid var(--accent)" : "1px solid var(--border-subtle)" }}
-                                    >
-                                        <bt.icon className="w-6 h-6 text-[var(--accent)] mb-2" />
-                                        <p className="text-sm font-medium text-[var(--text-primary)]">{bt.label}</p>
-                                        <p className="text-[10px] text-[var(--text-muted)]">{bt.desc}</p>
-                                    </button>
-                                ))}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8">
+                        {/* Left Column: Core Details */}
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Business Name *</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="Your Business Name"
+                                    value={config.businessName}
+                                    onChange={(e) => updateConfig("businessName", e.target.value)}
+                                />
                             </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Website URL</label>
                                 <input
@@ -572,110 +553,133 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Right Column: Business Type */}
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">Business Type *</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {BUSINESS_TYPES.map((bt) => (
+                                    <button
+                                        key={bt.id}
+                                        onClick={() => updateConfig("businessType", bt.id)}
+                                        className={`p-3 rounded-xl text-left transition-all cursor-pointer ${config.businessType === bt.id
+                                            ? "ring-2 ring-[var(--accent)] bg-[var(--accent-glow)]"
+                                            : "bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)]"
+                                            }`}
+                                        style={{ border: config.businessType === bt.id ? "1px solid var(--accent)" : "1px solid var(--border-subtle)" }}
+                                    >
+                                        <bt.icon className="w-5 h-5 text-[var(--accent)] mb-2" />
+                                        <p className="text-xs font-medium text-[var(--text-primary)]">{bt.label}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 );
 
             case 1: // Products & Services (dynamic)
                 return (
-                    <div className="space-y-6">
+                    <div>
                         {!questions ? (
                             <p className="text-[var(--text-secondary)] text-sm">Please select a business type in Step 1.</p>
                         ) : (
-                            questions.step2.map((q) => (
-                                <div key={q.field}>
-                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">{q.label}</label>
-                                    {q.type === "textarea" ? (
-                                        <textarea
-                                            className="input-field min-h-[100px] resize-y"
-                                            placeholder={q.placeholder}
-                                            value={(config[q.field] as string) || ""}
-                                            onChange={(e) => updateConfig(q.field, e.target.value)}
-                                        />
-                                    ) : q.type === "select" ? (
-                                        <select
-                                            className="input-field"
-                                            value={(config[q.field] as string) || ""}
-                                            onChange={(e) => updateConfig(q.field, e.target.value)}
-                                        >
-                                            <option value="">Select...</option>
-                                            {q.options?.map((o) => <option key={o} value={o}>{o}</option>)}
-                                        </select>
-                                    ) : (
-                                        <input
-                                            className="input-field"
-                                            placeholder={q.placeholder}
-                                            value={(config[q.field] as string) || ""}
-                                            onChange={(e) => updateConfig(q.field, e.target.value)}
-                                        />
-                                    )}
-                                </div>
-                            ))
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {questions.step2.map((q) => (
+                                    <div key={q.field}>
+                                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">{q.label}</label>
+                                        {q.type === "textarea" ? (
+                                            <textarea
+                                                className="input-field min-h-[60px] resize-y"
+                                                placeholder={q.placeholder}
+                                                value={(config[q.field] as string) || ""}
+                                                onChange={(e) => updateConfig(q.field, e.target.value)}
+                                            />
+                                        ) : q.type === "select" ? (
+                                            <select
+                                                className="input-field"
+                                                value={(config[q.field] as string) || ""}
+                                                onChange={(e) => updateConfig(q.field, e.target.value)}
+                                            >
+                                                <option value="">Select...</option>
+                                                {q.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                className="input-field"
+                                                placeholder={q.placeholder}
+                                                value={(config[q.field] as string) || ""}
+                                                onChange={(e) => updateConfig(q.field, e.target.value)}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 );
 
             case 2: // Policies (dynamic)
                 return (
-                    <div className="space-y-6">
+                    <div>
                         {!questions ? (
                             <p className="text-[var(--text-secondary)] text-sm">Please select a business type in Step 1.</p>
                         ) : (
-                            questions.step3.map((q) => (
-                                <div key={q.field}>
-                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">{q.label}</label>
-                                    {q.type === "textarea" ? (
-                                        <textarea
-                                            className="input-field min-h-[100px] resize-y"
-                                            placeholder={q.placeholder}
-                                            value={(config[q.field] as string) || ""}
-                                            onChange={(e) => updateConfig(q.field, e.target.value)}
-                                        />
-                                    ) : q.type === "select" ? (
-                                        <select
-                                            className="input-field"
-                                            value={(config[q.field] as string) || ""}
-                                            onChange={(e) => updateConfig(q.field, e.target.value)}
-                                        >
-                                            <option value="">Select...</option>
-                                            {q.options?.map((o) => <option key={o} value={o}>{o}</option>)}
-                                        </select>
-                                    ) : (
-                                        <input
-                                            className="input-field"
-                                            placeholder={q.placeholder}
-                                            value={(config[q.field] as string) || ""}
-                                            onChange={(e) => updateConfig(q.field, e.target.value)}
-                                        />
-                                    )}
-                                </div>
-                            ))
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {questions.step3.map((q) => (
+                                    <div key={q.field}>
+                                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">{q.label}</label>
+                                        {q.type === "textarea" ? (
+                                            <textarea
+                                                className="input-field min-h-[60px] resize-y"
+                                                placeholder={q.placeholder}
+                                                value={(config[q.field] as string) || ""}
+                                                onChange={(e) => updateConfig(q.field, e.target.value)}
+                                            />
+                                        ) : q.type === "select" ? (
+                                            <select
+                                                className="input-field"
+                                                value={(config[q.field] as string) || ""}
+                                                onChange={(e) => updateConfig(q.field, e.target.value)}
+                                            >
+                                                <option value="">Select...</option>
+                                                {q.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                className="input-field"
+                                                placeholder={q.placeholder}
+                                                value={(config[q.field] as string) || ""}
+                                                onChange={(e) => updateConfig(q.field, e.target.value)}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 );
 
             case 3: // Support Config
                 return (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Business Hours</label>
-                                <input
-                                    className="input-field"
-                                    placeholder="Mon-Fri 9am-5pm"
-                                    value={(config.businessHours as string) || ""}
-                                    onChange={(e) => updateConfig("businessHours", e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Escalation Email</label>
-                                <input
-                                    className="input-field"
-                                    type="email"
-                                    placeholder="support@yourbusiness.com"
-                                    value={(config.escalationEmail as string) || ""}
-                                    onChange={(e) => updateConfig("escalationEmail", e.target.value)}
-                                />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Business Hours</label>
+                            <input
+                                className="input-field"
+                                placeholder="Mon-Fri 9am-5pm"
+                                value={(config.businessHours as string) || ""}
+                                onChange={(e) => updateConfig("businessHours", e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Escalation Email</label>
+                            <input
+                                className="input-field"
+                                type="email"
+                                placeholder="support@yourbusiness.com"
+                                value={(config.escalationEmail as string) || ""}
+                                onChange={(e) => updateConfig("escalationEmail", e.target.value)}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Welcome Message</label>
@@ -703,148 +707,148 @@ export default function DashboardPage() {
 
             case 4: // Knowledge Base
                 return (
-                    <div className="space-y-8">
-                        {/* File Upload */}
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                                Upload FAQ Document (PDF / DOCX)
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="file"
-                                    accept=".pdf,.docx,.doc"
-                                    onChange={(e) => updateConfig("faqFile", e.target.files?.[0] || null)}
-                                    className="hidden"
-                                    id="faq-upload"
-                                />
-                                <label
-                                    htmlFor="faq-upload"
-                                    className="flex items-center justify-center gap-3 p-8 rounded-xl cursor-pointer transition-all hover:border-[var(--accent)]"
-                                    style={{ background: "var(--bg-card)", border: "2px dashed var(--border-default)" }}
-                                >
-                                    <Upload className="w-5 h-5 text-[var(--accent-light)]" />
-                                    <span className="text-sm text-[var(--text-secondary)]">
-                                        {config.faqFile ? (config.faqFile as File).name : "Click to upload PDF or DOCX"}
-                                    </span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Left Column: Automated Ingestion */}
+                        <div className="space-y-6">
+                            {/* File Upload */}
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                                    Upload FAQ Document (PDF / DOCX)
                                 </label>
-                            </div>
-                        </div>
-
-                        {/* ── Import from Website ── */}
-                        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-subtle)" }}>
-                            <div className="px-4 py-3 flex items-center gap-2" style={{ background: "var(--bg-card)" }}>
-                                <Globe className="w-4 h-4 text-[var(--accent)]" />
-                                <span className="text-xs font-semibold text-[var(--text-primary)]">Import from Website</span>
-                                <span className="ml-auto text-[10px] text-[var(--text-muted)]">AI reads your site and drafts FAQs for you</span>
-                            </div>
-                            <div className="p-4 space-y-3" style={{ background: "var(--bg-primary)" }}>
-                                <div className="flex gap-2">
+                                <div className="relative">
                                     <input
-                                        className="input-field text-sm flex-1"
-                                        placeholder="https://yourbusiness.com"
-                                        value={scrapeUrl}
-                                        onChange={(e) => { setScrapeUrl(e.target.value); setScrapeError(""); }}
-                                        onKeyDown={(e) => e.key === "Enter" && handleScrapeAndGenerate()}
+                                        type="file"
+                                        accept=".pdf,.docx,.doc"
+                                        onChange={(e) => updateConfig("faqFile", e.target.files?.[0] || null)}
+                                        className="hidden"
+                                        id="faq-upload"
                                     />
-                                    <button
-                                        onClick={handleScrapeAndGenerate}
-                                        disabled={scrapeLoading || !scrapeUrl}
-                                        className="btn-primary py-2 px-4 text-xs flex items-center gap-2 whitespace-nowrap disabled:opacity-40"
+                                    <label
+                                        htmlFor="faq-upload"
+                                        className="flex items-center justify-center gap-3 p-6 rounded-xl cursor-pointer transition-all hover:border-[var(--accent)]"
+                                        style={{ background: "var(--bg-card)", border: "2px dashed var(--border-default)" }}
                                     >
-                                        {scrapeLoading
-                                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Reading…</>
-                                            : <><Zap className="w-3.5 h-3.5" /> Generate FAQs</>
-                                        }
-                                    </button>
+                                        <Upload className="w-5 h-5 text-[var(--accent-light)]" />
+                                        <span className="text-sm text-[var(--text-secondary)]">
+                                            {config.faqFile ? (config.faqFile as File).name : "Click to upload PDF or DOCX"}
+                                        </span>
+                                    </label>
                                 </div>
-                                {scrapeError && (
-                                    <p className="text-xs text-[var(--danger)] flex items-center gap-1.5">
-                                        <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {scrapeError}
-                                    </p>
-                                )}
-                                <p className="text-[11px] text-[var(--text-muted)]">
-                                    Ryoku reads your homepage, extracts what your business does, and drafts 8 Q&As tailored to your customers.
-                                </p>
                             </div>
+
+                            {/* ── Import from Website ── */}
+                            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-subtle)" }}>
+                                <div className="px-4 py-3 flex items-center gap-2" style={{ background: "var(--bg-card)" }}>
+                                    <Globe className="w-4 h-4 text-[var(--accent)]" />
+                                    <span className="text-xs font-semibold text-[var(--text-primary)]">Import from Website</span>
+                                </div>
+                                <div className="p-4 space-y-3" style={{ background: "var(--bg-primary)" }}>
+                                    <div className="flex gap-2">
+                                        <input
+                                            className="input-field text-sm flex-1"
+                                            placeholder="https://yourbusiness.com"
+                                            value={scrapeUrl}
+                                            onChange={(e) => { setScrapeUrl(e.target.value); setScrapeError(""); }}
+                                            onKeyDown={(e) => e.key === "Enter" && handleScrapeAndGenerate()}
+                                        />
+                                        <button
+                                            onClick={handleScrapeAndGenerate}
+                                            disabled={scrapeLoading || !scrapeUrl}
+                                            className="btn-primary py-2 px-3 text-xs flex items-center gap-2 whitespace-nowrap disabled:opacity-40"
+                                        >
+                                            {scrapeLoading
+                                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Reading…</>
+                                                : <><Zap className="w-3.5 h-3.5" /> Generate</>
+                                            }
+                                        </button>
+                                    </div>
+                                    {scrapeError && (
+                                        <p className="text-xs text-[var(--danger)] flex items-center gap-1.5">
+                                            <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {scrapeError}
+                                        </p>
+                                    )}
+                                    <p className="text-[11px] text-[var(--text-muted)]">
+                                        AI reads your site and drafts up to 8 Q&As automatically.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* ── AI-Drafted FAQ Review ── */}
+                            {showDraftFaqs && draftFaqs.length > 0 && (
+                                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.3)" }}>
+                                    <div className="px-4 py-3 flex items-center gap-2" style={{ background: "rgba(74,222,128,0.06)" }}>
+                                        <BadgeCheck className="w-4 h-4 text-[var(--success)]" />
+                                        <span className="text-xs font-semibold text-[var(--success)]">
+                                            {draftFaqs.filter(f => f.accepted).length} AI-drafted Q&As
+                                        </span>
+                                    </div>
+                                    <div className="divide-y max-h-[200px] overflow-y-auto" style={{ borderColor: "rgba(74,222,128,0.1)" }}>
+                                        {draftFaqs.map((faq, i) => (
+                                            <div
+                                                key={i}
+                                                className="p-3 flex items-start gap-3 transition-colors"
+                                                style={{ background: faq.accepted ? "rgba(74,222,128,0.03)" : "var(--bg-primary)", opacity: faq.accepted ? 1 : 0.45 }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={faq.accepted}
+                                                    onChange={() => setDraftFaqs(prev => prev.map((f, j) => j === i ? { ...f, accepted: !f.accepted } : f))}
+                                                    className="mt-1 accent-[var(--accent)] cursor-pointer w-3.5 h-3.5 shrink-0"
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-semibold text-[var(--text-primary)] mb-0.5">{faq.question}</p>
+                                                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">{faq.answer}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="px-4 py-3 flex gap-3" style={{ background: "var(--bg-card)", borderTop: "1px solid rgba(74,222,128,0.1)" }}>
+                                        <button
+                                            onClick={acceptDraftFaqs}
+                                            disabled={draftFaqs.filter(f => f.accepted).length === 0}
+                                            className="btn-primary py-1.5 px-4 text-xs flex items-center gap-2 disabled:opacity-40"
+                                        >
+                                            <Check className="w-3.5 h-3.5" /> Load Selected
+                                        </button>
+                                        <button
+                                            onClick={() => { setShowDraftFaqs(false); setDraftFaqs([]); }}
+                                            className="btn-secondary py-1.5 px-3 text-xs"
+                                        >
+                                            Dismiss
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Starter FAQ Pack */}
+                            {config.businessType && getFaqPack(config.businessType as string).length > 0 && config.faqs.length <= 1 && !config.faqs[0]?.question && (
+                                <div className="p-4 rounded-xl" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <BadgeCheck className="w-4 h-4 text-[var(--accent)]" />
+                                            <span className="text-xs font-semibold text-[var(--accent-light)]">Starter Pack</span>
+                                        </div>
+                                        <button
+                                            onClick={() => updateConfig("faqs", getFaqPack(config.businessType as string))}
+                                            className="text-xs font-bold text-[var(--accent)] hover:underline cursor-pointer"
+                                        >
+                                            Load {getFaqPack(config.businessType as string).length} Qs →
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-[var(--text-muted)]">Pre-written Q&As for your industry.</p>
+                                </div>
+                            )}
                         </div>
 
-                        {/* ── AI-Drafted FAQ Review ── */}
-                        {showDraftFaqs && draftFaqs.length > 0 && (
-                            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.3)" }}>
-                                <div className="px-4 py-3 flex items-center gap-2" style={{ background: "rgba(74,222,128,0.06)" }}>
-                                    <BadgeCheck className="w-4 h-4 text-[var(--success)]" />
-                                    <span className="text-xs font-semibold text-[var(--success)]">
-                                        {draftFaqs.filter(f => f.accepted).length} AI-drafted Q&As — review and load
-                                    </span>
-                                    <span className="ml-auto text-[10px] text-[var(--text-muted)]">Uncheck to skip any</span>
-                                </div>
-                                <div className="divide-y" style={{ borderColor: "rgba(74,222,128,0.1)" }}>
-                                    {draftFaqs.map((faq, i) => (
-                                        <div
-                                            key={i}
-                                            className="p-3 flex items-start gap-3 transition-colors"
-                                            style={{ background: faq.accepted ? "rgba(74,222,128,0.03)" : "var(--bg-primary)", opacity: faq.accepted ? 1 : 0.45 }}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={faq.accepted}
-                                                onChange={() => setDraftFaqs(prev => prev.map((f, j) => j === i ? { ...f, accepted: !f.accepted } : f))}
-                                                className="mt-1 accent-[var(--accent)] cursor-pointer w-3.5 h-3.5 shrink-0"
-                                            />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-semibold text-[var(--text-primary)] mb-0.5">{faq.question}</p>
-                                                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{faq.answer}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="px-4 py-3 flex gap-3" style={{ background: "var(--bg-card)", borderTop: "1px solid rgba(74,222,128,0.1)" }}>
-                                    <button
-                                        onClick={acceptDraftFaqs}
-                                        disabled={draftFaqs.filter(f => f.accepted).length === 0}
-                                        className="btn-primary py-2 px-5 text-xs flex items-center gap-2 disabled:opacity-40"
-                                    >
-                                        <Check className="w-3.5 h-3.5" />
-                                        Load {draftFaqs.filter(f => f.accepted).length} into my knowledge base
-                                    </button>
-                                    <button
-                                        onClick={() => { setShowDraftFaqs(false); setDraftFaqs([]); }}
-                                        className="btn-secondary py-2 px-4 text-xs"
-                                    >
-                                        Dismiss
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Starter FAQ Pack */}
-                        {config.businessType && getFaqPack(config.businessType as string).length > 0 && config.faqs.length <= 1 && !config.faqs[0]?.question && (
-                            <div className="p-4 rounded-xl" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)" }}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <BadgeCheck className="w-4 h-4 text-[var(--accent)]" />
-                                        <span className="text-xs font-semibold text-[var(--accent-light)]">Starter Q&A Pack available for your business type</span>
-                                    </div>
-                                    <button
-                                        onClick={() => updateConfig("faqs", getFaqPack(config.businessType as string))}
-                                        className="text-xs font-bold text-[var(--accent)] hover:underline cursor-pointer"
-                                    >
-                                        Load {getFaqPack(config.businessType as string).length} questions →
-                                    </button>
-                                </div>
-                                <p className="text-xs text-[var(--text-muted)]">Pre-written Q&As for your industry. Load them and edit as needed — no writing from scratch.</p>
-                            </div>
-                        )}
-
-                        {/* Manual FAQs */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
+                        {/* Right Column: Manual FAQs */}
+                        <div className="flex flex-col max-h-[60vh] lg:max-h-[500px]">
+                            <div className="flex items-center justify-between mb-4 shrink-0">
                                 <label className="text-sm font-medium text-[var(--text-secondary)]">Custom Q&A Pairs</label>
                                 <button onClick={addFaq} className="flex items-center gap-1.5 text-xs font-medium text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer">
                                     <Plus className="w-3.5 h-3.5" /> Add Question
                                 </button>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-4 overflow-y-auto pr-2 flex-1 pb-4">
                                 {config.faqs.map((faq, i) => (
                                     <div key={i} className="p-4 rounded-xl space-y-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
                                         <div className="flex items-start justify-between gap-2">
@@ -884,9 +888,9 @@ export default function DashboardPage() {
         const apiEndpoint = `${typeof window !== "undefined" ? window.location.origin : ""}/api/v1/chat/${existingBusiness.slug}`;
 
         return (
-            <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
+            <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
                 <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
-                <div className="max-w-4xl mx-auto relative z-10 space-y-8">
+                <div className="max-w-4xl mx-auto w-full relative z-10 flex-1 overflow-y-auto pt-20 px-4 pb-10 space-y-8 scroll-smooth">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                         <div>
@@ -941,7 +945,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Stats row */}
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <div className="p-3 rounded-lg text-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
                                 <p className="text-2xl font-bold text-[var(--text-primary)]">{botHealth?.week.chats ?? "—"}</p>
                                 <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mt-0.5">Chats handled</p>
@@ -952,35 +956,7 @@ export default function DashboardPage() {
                                 </p>
                                 <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mt-0.5">Handled by AI</p>
                             </div>
-                            <div className="p-3 rounded-lg text-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
-                                <p className="text-2xl font-bold text-[var(--text-primary)]">{botHealth?.topUnansweredQuestions.length ?? "—"}</p>
-                                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mt-0.5">Gaps to fill</p>
-                            </div>
                         </div>
-
-                        {/* Unanswered questions */}
-                        {botHealth && botHealth.topUnansweredQuestions.length > 0 && (
-                            <div>
-                                <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-1.5">
-                                    <HelpingHand className="w-3.5 h-3.5 text-[var(--accent)]" />
-                                    Questions your bot couldn&apos;t answer
-                                </p>
-                                <div className="space-y-1.5">
-                                    {botHealth.topUnansweredQuestions.slice(0, 3).map((q) => (
-                                        <div key={q.id} className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
-                                            <p className="text-xs text-[var(--text-secondary)] flex-1 truncate mr-2">&ldquo;{q.question}&rdquo;</p>
-                                            <span className="text-[10px] text-[var(--text-muted)] shrink-0">{q.frequency}x asked</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => { setIsEditing(true); setStep(4); }}
-                                    className="mt-2 text-xs font-semibold text-[var(--accent-light)] hover:underline cursor-pointer"
-                                >
-                                    + Add answers to your knowledge base
-                                </button>
-                            </div>
-                        )}
 
                         {botHealth && botHealth.week.chats === 0 && (
                             <p className="text-xs text-[var(--text-muted)] text-center py-2">No chats yet this week. Share your bot link to get started!</p>
@@ -988,12 +964,10 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Navigation Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         {[
                             { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", desc: "Performance & CSAT", free: true },
-                            { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations", desc: "Chat history", free: true },
                             { href: "/dashboard/agent", icon: Headphones, label: "Agent Workspace", desc: "Live chat & handoff", free: true },
-                            { href: "/dashboard/billing", icon: CreditCard, label: "Billing", desc: "Plans & subscription", free: true },
                         ].filter(item => item.free || (existingBusiness?.planName?.toLowerCase() === "paid")).map(({ href, icon: Icon, label, desc }) => (
                             <button
                                 key={href}
@@ -1200,7 +1174,7 @@ const reader = response.body.getReader();
     // ── Loading Overlay ──
     // ── Onboarding Wizard ──
     return (
-        <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
+        <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
             <div className="ambient-glow" style={{ top: "-100px", left: "-100px" }} />
 
             {/* Loading */}
@@ -1211,7 +1185,7 @@ const reader = response.body.getReader();
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6"
-                        style={{ background: "rgba(6,8,15,0.95)" }}
+                        style={{ background: "rgba(6,8,15,0.95)", backdropFilter: "blur(4px)" }}
                     >
                         <div className="relative">
                             <div className="w-20 h-20 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
@@ -1227,7 +1201,9 @@ const reader = response.body.getReader();
                 )}
             </AnimatePresence>
 
-            <div className="max-w-3xl mx-auto relative z-10">
+            {/* Content Container */}
+            <div className="flex-1 overflow-y-auto pt-20 px-4 pb-20 scroll-smooth">
+                <div className="max-w-6xl mx-auto w-full relative z-10">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-2">
@@ -1288,24 +1264,30 @@ const reader = response.body.getReader();
                     </motion.div>
                 )}
 
-                {/* Step Indicator */}
-                <div className="flex items-center gap-1 mb-10 overflow-x-auto pb-2">
-                    {STEPS.map((s, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setStep(i)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${step === i
-                                ? "bg-[var(--accent-glow)] text-[var(--accent-light)] ring-1 ring-[var(--accent)]"
-                                : i < step
-                                    ? "text-[var(--success)]"
-                                    : "text-[var(--text-muted)]"
-                                }`}
-                        >
-                            {i < step ? <Check className="w-3.5 h-3.5" /> : <s.icon className="w-3.5 h-3.5" />}
-                            <span className="hidden sm:inline">{s.label}</span>
-                            <span className="sm:hidden">{i + 1}</span>
-                        </button>
-                    ))}
+                {/* Step Indicator - Sticky */}
+                <div className="sticky top-14 z-30 mb-10 -mx-4 px-4 py-3" style={{ 
+                    background: "rgba(255, 255, 255, 0.7)", 
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    borderBottom: "1px solid var(--border-subtle)"
+                }}>
+                    <div className="flex items-center gap-1 overflow-x-auto pb-2 no-scrollbar">
+                        {STEPS.map((s, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setStep(i)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${step === i
+                                    ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20"
+                                    : i < step
+                                        ? "text-[var(--success)]"
+                                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5"
+                                    }`}
+                            >
+                                {i < step ? <Check className="w-3.5 h-3.5" /> : <s.icon className="w-3.5 h-3.5" />}
+                                <span className="whitespace-nowrap">{s.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Step Content */}
@@ -1361,6 +1343,7 @@ const reader = response.body.getReader();
                             {isEditing ? "Update Bot" : "Generate Bot"}
                         </button>
                     )}
+                    </div>
                 </div>
             </div>
         </main>

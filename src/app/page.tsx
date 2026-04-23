@@ -114,7 +114,7 @@ export default function LandingPage() {
             variants={fadeUp}
             className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-8"
           >
-            Ryoku — AI Customer Service
+            Ryoku — One-Click Chatbots
           </motion.p>
 
           {/* headline: serif + asymmetric */}
@@ -127,10 +127,10 @@ export default function LandingPage() {
               }}
               className="text-[clamp(3rem,8vw,7.5rem)] font-black text-[var(--text-primary)] relative z-10"
             >
-              <LetterReveal text="Customer support" delay={0.2} />
+              <LetterReveal text="Create Chatbots" delay={0.2} />
               <br className="hidden sm:block" />
               <span className="italic text-[var(--accent)]">
-                <LetterReveal text="that actually" delay={0.6} />
+                <LetterReveal text="for Your Business" delay={0.6} />
               </span>
               <br className="hidden sm:block" />
               <span
@@ -139,7 +139,7 @@ export default function LandingPage() {
                   color: "transparent",
                 }}
               >
-                <LetterReveal text="works." delay={1.0} />
+                <LetterReveal text="at one Click" delay={1.0} />
               </span>
             </h1>
 
@@ -249,15 +249,32 @@ export default function LandingPage() {
                       return request. Your refund will be confirmed by the store
                       within 24h.
                     </div>
-                    <div className="flex flex-wrap gap-2.5 mt-3.5 ml-1">
-                      {["Track status", "Talk to humans"].map((l) => (
-                        <button
-                          key={l}
-                          className="text-[10px] font-bold tracking-wide uppercase text-[var(--accent-warm)] border border-[var(--accent)]/30 px-3.5 py-1.5 rounded-full cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all focus-visible:outline-2 focus-visible:outline-white"
-                        >
-                          {l}
-                        </button>
-                      ))}
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, x: 10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: 4.8, type: "spring", stiffness: 100 }}
+                  className="flex justify-end"
+                >
+                  <div className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-light)] rounded-2xl rounded-tr-sm px-5 py-3.5 text-[0.9rem] text-white max-w-[260px] shadow-lg shadow-[var(--accent)]/20">
+                    I would like to speak to a human agent, please
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: 6.2, type: "spring", stiffness: 100 }}
+                  className="flex gap-4 items-start"
+                >
+                  <div className="w-9 h-9 shadow-lg rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-glow)] flex items-center justify-center text-[12px] text-white font-bold shrink-0 mt-0.5">
+                    R
+                  </div>
+                  <div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl rounded-tl-sm px-5 py-3.5 text-[0.9rem] text-white/90 max-w-[280px] leading-relaxed shadow-sm">
+                      Please wait for some time for a real agent to join.
                     </div>
                   </div>
                 </motion.div>
@@ -266,7 +283,7 @@ export default function LandingPage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 4.5 }}
+                  transition={{ delay: 7.5 }}
                   className="flex gap-4 items-start"
                 >
                   <div className="w-9 h-9 shadow-lg rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-glow)] flex items-center justify-center text-[12px] text-white font-bold shrink-0" />

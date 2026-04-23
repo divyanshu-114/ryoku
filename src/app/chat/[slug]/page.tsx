@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,7 +14,13 @@ import {
     RefreshCcw,
     Zap,
     Heart,
+    Headphones,
+    X,
+    Mail,
+    CheckCircle2,
+    Shield,
 } from "lucide-react";
+import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher";
 
 export default function ChatPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -37,7 +43,20 @@ export default function ChatPage() {
 
     const isLoading = status === "submitted" || status === "streaming";
     const [input, setInput] = useState("");
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setInput(val);
+
+        // Send typing event every 2 seconds
+        if (val.trim() && Date.now() - lastTypingSentRef.current > 2000) {
+            lastTypingSentRef.current = Date.now();
+            fetch("/api/chat/typing", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ conversationId, role: "user" }),
+            }).catch(() => {});
+        }
+    };
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!input.trim() || isLoading) return;
@@ -51,6 +70,217 @@ export default function ChatPage() {
     const [rated, setRated] = useState<"up" | "down" | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    // Agent takeover and real-time chat state
+    const [agentActive, setAgentActive] = useState(false);
+    const [realTimeMessages, setRealTimeMessages] = useState<{ id: string; role: string; content: string; createdAt: string; sender?: string }[]>([]);
+
+    type ChatMessage = {
+        id: string;
+        role: "user" | "assistant" | "agent" | "system";
+        content: string;
+        createdAt: string;
+        sender?: string;
+    };
+
+    // Track stable timestamps for messages that lack them (e.g. optimistic SDK messages)
+    const messageTimestamps = useRef<Record<string, string>>({});
+
+    const normalizeSdkMessage = (msg: any, index: number): ChatMessage => {
+        const content = typeof msg.content === "string"
+            ? msg.content
+            : Array.isArray(msg.content)
+                ? msg.content.filter((part) => part?.type === "text").map((part) => part.text || "").join("")
+                : Array.isArray(msg.parts)
+                    ? msg.parts.map((part) => part.text || "").join("")
+                    : "";
+
+        const id = msg.id ?? `sdk-${index}-${msg.role}-${Math.random().toString(36).slice(2, 8)}`;
+        
+        // Ensure stable createdAt
+        if (!messageTimestamps.current[id]) {
+            const rawDate = msg.createdAt;
+            messageTimestamps.current[id] = rawDate instanceof Date 
+                ? rawDate.toISOString() 
+                : typeof rawDate === "string" 
+                    ? rawDate 
+                    : new Date(Date.now() + index).toISOString();
+        }
+
+        return {
+            id,
+            role: msg.role === "agent" ? "agent" : msg.role === "system" ? "system" : msg.role === "user" ? "user" : "assistant",
+            content: content.trim(),
+            createdAt: messageTimestamps.current[id],
+            sender: msg.sender,
+        };
+    };
+
+    const combinedMessages = useMemo(() => {
+        const normalizedHistory = messages.map(normalizeSdkMessage);
+        
+        // Deduplicate and filter
+        const sdkIds = new Set(normalizedHistory.map(m => m.id));
+        const sdkContentKeys = new Set(normalizedHistory.map(m => `${m.role}::${m.content.trim()}`));
+
+        const deduplicatedRealTime = realTimeMessages.filter((m) => {
+            // Filter out if already in SDK history by ID or by role/content match
+            if (sdkIds.has(m.id)) return false;
+            if (sdkContentKeys.has(`${m.role}::${m.content.trim()}`)) return false;
+            return true;
+        });
+
+        const allMessages = [...normalizedHistory, ...deduplicatedRealTime]
+            .filter(msg => msg.content.trim().length > 0);
+
+        // Final sort by timestamp, fallback to ID
+        return allMessages.sort((a, b) => {
+            const aTime = Date.parse(a.createdAt) || 0;
+            const bTime = Date.parse(b.createdAt) || 0;
+            if (aTime === bTime) return a.id.localeCompare(b.id);
+            return aTime - bTime;
+        });
+    }, [messages, realTimeMessages]);
+
+    // Contact form state
+    const [contactSubmitted, setContactSubmitted] = useState(false);
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [emailInput, setEmailInput] = useState("");
+    const [phoneInput, setPhoneInput] = useState("");
+    const [contactLoading, setContactLoading] = useState(false);
+    const [contactError, setContactError] = useState("");
+    const [agentTyping, setAgentTyping] = useState(false);
+    const agentTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastTypingSentRef = useRef<number>(0);
+
+    // Pusher: listen for agent messages and conversation updates
+    useEffect(() => {
+        const pusher = getPusherClient();
+        const channel = pusher.subscribe(`private-conversation-${conversationId}`);
+
+        channel.bind(PUSHER_EVENTS.NEW_MESSAGE, (data: { id?: number | string; role: string; content: string; sender?: string }) => {
+            if (data.role === "agent") {
+                setAgentActive(true);
+                setRealTimeMessages(prev => {
+                    const msgId = data.id ? `${data.id}` : `agent-${Date.now()}`;
+                    // Avoid duplicate agent messages
+                    if (prev.some(m => m.id === msgId)) return prev;
+                    return [...prev, {
+                        id: msgId,
+                        role: "agent",
+                        content: data.content,
+                        createdAt: new Date().toISOString(),
+                        sender: data.sender,
+                    }];
+                });
+            } else if (data.role === "user") {
+                // After agent takeover, useChat returns empty stream so user messages
+                // must be captured via Pusher to remain visible in the chat
+                setRealTimeMessages(prev => {
+                    const msgId = `pusher-user-${data.id || Date.now()}`;
+                    if (prev.some(m => m.id === msgId)) return prev;
+                    return [...prev, {
+                        id: msgId,
+                        role: "user",
+                        content: data.content,
+                        createdAt: new Date().toISOString(),
+                    }];
+                });
+            }
+        });
+
+        channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, (data: { status: string }) => {
+            if (data.status === "resolved") {
+                setAgentActive(false);
+                setRealTimeMessages(prev => [...prev, {
+                    id: `system-${Date.now()}`,
+                    role: "system",
+                    content: "This conversation has been resolved. Thank you!",
+                    createdAt: new Date().toISOString(),
+                }]);
+            } else if (data.status === "active") {
+                setAgentActive(true);
+            }
+        });
+        
+        channel.bind(PUSHER_EVENTS.TYPING, (data?: { role: string }) => {
+            if (data?.role === "agent") {
+                setAgentTyping(true);
+                if (agentTypingTimeoutRef.current) clearTimeout(agentTypingTimeoutRef.current);
+                agentTypingTimeoutRef.current = setTimeout(() => setAgentTyping(false), 3000);
+            }
+        });
+
+        return () => {
+            channel.unbind_all();
+            pusher.unsubscribe(`private-conversation-${conversationId}`);
+        };
+    }, [conversationId]);
+
+    // Delete anonymous chat on session close
+    useEffect(() => {
+        const handleSessionClose = () => {
+            if (!contactSubmitted) {
+                fetch(`/api/chat/${slug}?conversationId=${conversationId}`, {
+                    method: "DELETE",
+                    keepalive: true,
+                }).catch(() => {});
+            }
+        };
+
+        window.addEventListener("pagehide", handleSessionClose);
+        window.addEventListener("beforeunload", handleSessionClose);
+        
+        return () => {
+            window.removeEventListener("pagehide", handleSessionClose);
+            window.removeEventListener("beforeunload", handleSessionClose);
+        };
+    }, [conversationId, slug, contactSubmitted]);
+
+    const handleEscalate = async (email: string, phone: string) => {
+        try {
+            await fetch("/api/chat/escalate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ conversationId, slug, reason: "User explicitly requested human agent", email, phone }),
+            });
+            // Also push a local message to the user that we are transferring them
+            sendMessage({ text: "I would like to speak to a human agent, please." });
+        } catch (err) {
+            console.error("Escalation failed", err);
+        }
+    };
+
+    const handleTalkToAgentClick = () => {
+        if (contactSubmitted) {
+            handleEscalate(emailInput, phoneInput);
+        } else {
+            setShowContactModal(true);
+        }
+    };
+
+    const handleSubmitContact = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!emailInput.trim() || !emailInput.includes("@")) {
+            setContactError("Please enter a valid email address.");
+            return;
+        }
+        if (!phoneInput.trim()) {
+            setContactError("Please enter a valid phone number.");
+            return;
+        }
+        setContactLoading(true);
+        setContactError("");
+        try {
+            await handleEscalate(emailInput, phoneInput);
+            setContactSubmitted(true);
+            setShowContactModal(false);
+        } catch (err: any) {
+            setContactError(err.message || "Failed to submit request.");
+        } finally {
+            setContactLoading(false);
+        }
+    };
 
     const businessName = slug?.replace(/-/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) || "Support";
 
@@ -73,7 +303,7 @@ export default function ChatPage() {
     // Auto-scroll
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    }, [combinedMessages]);
 
     // Scroll detection
     useEffect(() => {
@@ -95,31 +325,49 @@ export default function ChatPage() {
         <main className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
             {/* Header */}
             <header
-                className="flex items-center gap-3 px-5 py-4 shrink-0"
-                style={{ borderBottom: "1px solid var(--border-subtle)", background: "var(--bg-secondary)" }}
+                className="flex items-center gap-3 px-5 py-4 shrink-0 backdrop-blur-md sticky top-0 z-50"
+                style={{ borderBottom: "1px solid var(--border-subtle)", background: "rgba(255, 255, 255, 0.8)" }}
             >
                 <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: accentColor }}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--accent)]/20 transition-transform hover:scale-105"
+                    style={{ background: `linear-gradient(135deg, ${accentColor}, var(--accent-light))` }}
                 >
                     <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{businessName}</p>
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-[var(--text-primary)] truncate">{businessName}</p>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500/10" />
+                    </div>
                     <div className="flex items-center gap-1.5">
                         <div
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: "var(--success)", boxShadow: "0 0 6px var(--success)" }}
+                            className="w-1.5 h-1.5 rounded-full animate-pulse"
+                            style={{ background: "var(--success)", boxShadow: "0 0 8px var(--success)" }}
                         />
-                        <span className="text-[11px] text-[var(--success)]">Online</span>
+                        <span className="text-[11px] font-medium text-[var(--success)] uppercase tracking-wider">Live & Active</span>
                     </div>
                 </div>
+                {agentActive && (
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <Shield className="w-3 h-3 text-emerald-500" />
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Verified Agent</span>
+                    </div>
+                )}
             </header>
+
+            {/* Agent Active Banner */}
+            {agentActive && (
+                <div className="px-4 py-2 flex items-center justify-center gap-2 text-xs font-medium"
+                    style={{ background: "linear-gradient(90deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05))", borderBottom: "1px solid rgba(16,185,129,0.2)", color: "rgb(52,211,153)" }}>
+                    <Shield className="w-3.5 h-3.5" />
+                    You&apos;re now chatting with a live agent
+                </div>
+            )}
 
             {/* Messages */}
             <div ref={scrollAreaRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4 relative">
                 {/* Welcome */}
-                {messages.length === 0 && (
+                {combinedMessages.length === 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -148,72 +396,70 @@ export default function ChatPage() {
                 )}
 
                 {/* Message List */}
-                {messages.map((msg, i) => (
+                {combinedMessages.map((msg, i) => (
                     <motion.div
                         key={msg.id || i}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
-                        className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                        className={`flex gap-3 ${msg.role === "user" ? "justify-end" : msg.role === "system" ? "justify-center" : "justify-start"}`}
                     >
-                        {msg.role === "assistant" && (
+                        {msg.role !== "user" && (
                             <div
-                                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1"
-                                style={{ background: accentColor }}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1 ${msg.role === "agent" ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md" : "bg-[var(--bg-card)]"}`}
                             >
-                                <Bot className="w-4 h-4 text-white" />
+                                {msg.role === "agent" ? <Shield className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-[var(--text-primary)]" />}
                             </div>
                         )}
                         <div
                             className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${msg.role === "user"
                                 ? "rounded-2xl rounded-br-md text-white"
-                                : "rounded-2xl rounded-tl-md"
-                                }`}
+                                : msg.role === "system"
+                                    ? "rounded-full text-center"
+                                    : "rounded-2xl rounded-tl-md"
+                                }}`}
                             style={
                                 msg.role === "user"
                                     ? { background: accentColor }
-                                    : {
-                                        background: "var(--bg-card)",
-                                        border: "1px solid var(--border-subtle)",
-                                        color: "var(--text-primary)",
-                                    }
+                                    : msg.role === "system"
+                                        ? { background: "var(--bg-card)", border: "1px solid var(--border-subtle)", color: "var(--text-muted)", fontSize: "11px" }
+                                        : { background: "white", border: "1px solid var(--border-subtle)", color: "var(--text-primary)", boxShadow: "0 2px 10px -4px rgba(0,0,0,0.08)" }
                             }
                         >
-                            {/* Render text content */}
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            {msg.parts?.map((part: any, j: number) => {
-                                if (part.type === "text") {
-                                    return <p key={j} className="whitespace-pre-wrap">{part.text}</p>;
-                                }
-                                if (part.type === "tool-invocation" || part.type === "tool-call") {
-                                    return (
-                                        <div key={j} className="mt-2 px-3 py-2 rounded-lg text-xs flex items-center gap-2" style={{ background: "var(--accent-glow)", border: "1px solid rgba(234,88,12,0.15)" }}>
-                                            <Zap className="w-3 h-3 text-[var(--accent-light)]" />
-                                            <span className="text-[var(--accent-light)] font-medium">{part.toolInvocation?.toolName || part.toolName || "Tool Call"}</span>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })}
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                            {msg.role === "agent" && (
+                                <div className="flex items-center justify-between mt-2 gap-4 text-[9px] text-[var(--text-muted)]">
+                                    <span className="font-bold text-emerald-500 uppercase tracking-widest">Official Agent</span>
+                                    <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 ))}
 
-                {/* Loading */}
-                {isLoading && (
-                    <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: accentColor }}>
-                            <Bot className="w-4 h-4 text-white" />
-                        </div>
-                        <div className="px-4 py-3 rounded-2xl rounded-tl-md" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
-                            <div className="flex gap-1.5">
-                                <div className="w-2 h-2 rounded-full bg-[var(--text-muted)] animate-bounce" style={{ animationDelay: "0ms" }} />
-                                <div className="w-2 h-2 rounded-full bg-[var(--text-muted)] animate-bounce" style={{ animationDelay: "150ms" }} />
-                                <div className="w-2 h-2 rounded-full bg-[var(--text-muted)] animate-bounce" style={{ animationDelay: "300ms" }} />
+                {/* Agent Typing Indicator (Real-time) */}
+                <AnimatePresence>
+                    {(isLoading || agentTyping) && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="flex gap-3"
+                        >
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm" style={{ background: agentTyping ? "#10b981" : accentColor }}>
+                                {agentTyping ? <Shield className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
                             </div>
-                        </div>
-                    </div>
-                )}
+                            <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm">
+                                <div className="flex gap-1.5 items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                                    {agentTyping && <span className="text-[10px] font-bold text-emerald-500 uppercase ml-2 tracking-widest">Agent Typing</span>}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Error */}
                 {error && (
@@ -226,7 +472,7 @@ export default function ChatPage() {
                 )}
 
                 {/* CSAT */}
-                {messages.length > 4 && !rated && (
+                {combinedMessages.length > 4 && !rated && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -267,8 +513,30 @@ export default function ChatPage() {
                 )}
             </AnimatePresence>
 
-            {/* Input */}
-            <div className="px-4 py-4 shrink-0" style={{ borderTop: "1px solid var(--border-subtle)", background: "var(--bg-secondary)" }}>
+            {/* Input & Suggested Actions */}
+            <div className="px-4 py-4 shrink-0 space-y-3" style={{ borderTop: "1px solid var(--border-subtle)", background: "var(--bg-secondary)" }}>
+                {/* Amazon-style quick actions */}
+                {!agentActive && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-center"
+                    >
+                        <button
+                            onClick={handleTalkToAgentClick}
+                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all border shadow-sm hover:shadow-md cursor-pointer group"
+                            style={{ 
+                                borderColor: "var(--border-subtle)", 
+                                color: "var(--text-secondary)",
+                                background: "var(--bg-card)"
+                            }}
+                        >
+                            <Headphones className="w-3.5 h-3.5 text-[var(--accent)] group-hover:scale-110 transition-transform" />
+                            <span>Talk to a real agent</span>
+                        </button>
+                    </motion.div>
+                )}
+
                 <form
                     id="chat-form"
                     onSubmit={handleSubmit}
@@ -299,6 +567,78 @@ export default function ChatPage() {
                     Powered by <span className="font-semibold text-[var(--accent-light)]">Ryoku</span>
                 </p>
             </div>
+
+            {/* Contact Details Modal */}
+            <AnimatePresence>
+                {showContactModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-sm rounded-2xl p-6 relative"
+                            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", boxShadow: "var(--shadow-xl)" }}
+                        >
+                            <button
+                                onClick={() => setShowContactModal(false)}
+                                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="text-center mb-6">
+                                <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: "var(--accent-glow)" }}>
+                                    <Headphones className="w-6 h-6 text-[var(--accent)]" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Talk to an Agent</h3>
+                                <p className="text-sm text-[var(--text-secondary)] mt-1">
+                                    Please provide your contact details so we can reach you if disconnected.
+                                </p>
+                            </div>
+
+                            {contactError && (
+                                <div className="mb-4 p-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-500 text-center">
+                                    {contactError}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSubmitContact} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        placeholder="your@email.com"
+                                        className="input-field w-full"
+                                        value={emailInput}
+                                        onChange={(e) => setEmailInput(e.target.value)}
+                                        disabled={contactLoading}
+                                        autoFocus
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Phone Number</label>
+                                    <input
+                                        type="tel"
+                                        placeholder="+1 (555) 000-0000"
+                                        className="input-field w-full"
+                                        value={phoneInput}
+                                        onChange={(e) => setPhoneInput(e.target.value)}
+                                        disabled={contactLoading}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={contactLoading || !emailInput || !phoneInput}
+                                    className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
+                                    style={{ background: accentColor, marginTop: "24px" }}
+                                >
+                                    {contactLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Connect"}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </main>
     );
 }

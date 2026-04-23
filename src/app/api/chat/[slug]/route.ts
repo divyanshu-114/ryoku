@@ -1,6 +1,6 @@
 import { streamText, tool } from "ai";
 import { db } from "@/lib/db";
-import { businesses, agents, conversations, messages as dbMessages, analyticsEvents } from "@/lib/db/schema";
+import { businesses, conversations, messages as dbMessages, analyticsEvents } from "@/lib/db/schema";
 import { triggerConversationMessage, triggerNewConversation } from "@/lib/pusher";
 import { withRetry, generateEmbedding } from "@/lib/ai-provider";
 import { analyzeSentiment, trackKnowledgeGap, logAnalyticsEvent } from "@/lib/intelligence";
@@ -124,17 +124,48 @@ export async function POST(
                     await db.update(conversations)
                         .set({ updatedAt: new Date() })
                         .where(eq(conversations.id, conversationId));
+
+                    // ── Agent Takeover Check ──
+                    // If an agent has taken over this conversation, do NOT call the LLM.
+                    // Just persist the user message and push it to the agent via Pusher.
+                    if (existing[0].assignedAgent) {
+                        const [savedUserMsg] = await db.insert(dbMessages).values({
+                            conversationId,
+                            role: "user",
+                            content: userMessage,
+                        }).returning();
+
+                        await triggerConversationMessage(conversationId, {
+                            id: savedUserMsg.id,
+                            role: "user",
+                            content: userMessage,
+                        });
+
+                        // Return an empty stream — the agent will reply via Pusher
+                        return new Response(
+                            new ReadableStream({
+                                start(controller) { controller.close(); },
+                            }),
+                            {
+                                headers: {
+                                    "Content-Type": "text/plain; charset=utf-8",
+                                    "Access-Control-Allow-Origin": "*",
+                                },
+                            }
+                        );
+                    }
                 }
 
-                // Insert user message to DB
-                await db.insert(dbMessages).values({
+                // Insert user message to DB and get its ID
+                const [savedUserMsg] = await db.insert(dbMessages).values({
                     conversationId,
                     role: "user",
                     content: userMessage,
-                });
+                }).returning();
 
-                // Trigger real-time event for agents
+                // Trigger real-time event for agents with exact ID
                 await triggerConversationMessage(conversationId, {
+                    id: savedUserMsg.id,
                     role: "user",
                     content: userMessage,
                 });
@@ -196,9 +227,8 @@ RULES:
 - Respond in the same language the customer uses
 - Keep responses concise but thorough
 - ${isPaid ? "You can help with orders and returns using the provided tools." : "You are an FAQ-only bot. You CANNOT look up orders or process returns. If the user asks about these, politely explain that they should contact support directly."}
-- ${config.canProcessReturns === "Yes" && isPaid ? "You CAN help process returns" : "Direct return requests to a human agent"}
-- ${config.canLookupOrders === "Yes" && isPaid ? "You CAN look up order status" : "Direct order queries to a human agent"}
-- If confidence is low OR the user seems frustrated, proactively offer to transfer to a human agent
+- Direct return requests and order queries to a human agent
+- If confidence is low OR the user seems frustrated, proactively offer to transfer to a human agent via the "Real Agent" button at the top of the chat
 - Business hours: ${config.businessHours || "Not specified"}
 - For urgent issues, suggest emailing: ${config.escalationEmail || "support team"}
 
@@ -316,56 +346,10 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                         }),
                         // @ts-expect-error Zod type mismatch with AI SDK
                         execute: async ({ reason }: { reason?: string }) => {
-                            // Check for online agents
-                            const onlineAgents = await db
-                                .select()
-                                .from(agents)
-                                .where(
-                                    and(
-                                        eq(agents.businessId, business.id),
-                                        eq(agents.status, "online")
-                                    )
-                                );
-
-                            if (onlineAgents.length > 0) {
-                                if (conversationId) {
-                                    await db.update(conversations)
-                                        .set({ status: "escalated", updatedAt: new Date() })
-                                        .where(eq(conversations.id, conversationId));
-                                    
-                                    await db.insert(analyticsEvents).values({
-                                        businessId: business.id,
-                                        event: "escalated",
-                                        data: { conversationId, reason, online: true },
-                                    });
-                                }
-
-                                return {
-                                    escalated: true,
-                                    online: true,
-                                    reason,
-                                    message: "I've notified our support team. An agent will be with you shortly.",
-                                };
-                            }
-
-                            if (conversationId) {
-                                await db.update(conversations)
-                                    .set({ status: "escalated", updatedAt: new Date() })
-                                    .where(eq(conversations.id, conversationId));
-
-                                await db.insert(analyticsEvents).values({
-                                    businessId: business.id,
-                                    event: "escalated",
-                                    data: { conversationId, reason, online: false },
-                                });
-                            }
-
-                            const email = config.escalationEmail || "our support team";
+                            // Redirect to UI-based email verification flow
                             return {
-                                escalated: true,
-                                online: false,
-                                reason,
-                                message: `It looks like our team is currently away. Please send an email to ${email} and we'll get back to you as soon as possible.`,
+                                escalated: false,
+                                message: "To connect with a human agent, please click the 'Real Agent' button at the top of the chat to verify your email address.",
                             };
                         },
                     }),
@@ -411,16 +395,14 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                 onFinish: async ({ text, toolCalls, toolResults }) => {
                     if (conversationId) {
                         if (lowConfidence && userSentiment === "frustrated") {
-                            await db.update(conversations)
-                                .set({ status: "escalated", updatedAt: new Date() })
-                                .where(eq(conversations.id, conversationId));
-
-                            await logAnalyticsEvent(business.id, "smart_handoff_triggered", {
+                            await logAnalyticsEvent(business.id, "smart_handoff_suggested", {
                                 conversationId,
                                 topSimilarity,
                                 threshold: autoHandoffThreshold,
                                 userSentiment,
                             });
+                            // System prompt already instructs the LLM to proactively offer handoff,
+                            // and the LLM will now tell them to use the UI button via the escalateToAgent tool or its own text.
                         }
 
                         await db.insert(dbMessages).values({
@@ -458,5 +440,34 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                 },
             }
         );
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { searchParams } = new URL(req.url);
+    const conversationId = searchParams.get("conversationId");
+
+    if (!conversationId) {
+        return new Response("Missing conversationId", { status: 400 });
+    }
+
+    try {
+        // Delete the conversation only if it is NOT verified
+        await db
+            .delete(conversations)
+            .where(
+                and(
+                    eq(conversations.id, conversationId),
+                    eq(conversations.customerEmailVerified, false)
+                )
+            );
+
+        return new Response(null, { status: 204 });
+    } catch (error) {
+        console.error("[Delete Chat Error]", error);
+        return new Response("Internal Server Error", { status: 500 });
     }
 }

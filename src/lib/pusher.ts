@@ -55,7 +55,7 @@ export const PUSHER_EVENTS = {
 // ── Helper: trigger a message to a conversation channel ──
 export async function triggerConversationMessage(
     conversationId: string,
-    message: { role: string; content: string; sender?: string }
+    message: { id?: number | string; role: string; content: string; sender?: string }
 ) {
     await pusherServer.trigger(
         `private-conversation-${conversationId}`,
@@ -88,4 +88,24 @@ export async function triggerHandoff(
         PUSHER_EVENTS.HANDOFF,
         { conversationId, reason }
     );
+}
+
+// ── Helper: broadcast conversation status update ──
+export async function triggerConversationUpdated(
+    businessId: string,
+    conversationId: string,
+    update: { status: string; assignedAgent?: string | null }
+) {
+    await Promise.all([
+        pusherServer.trigger(
+            `private-business-${businessId}`,
+            PUSHER_EVENTS.CONVERSATION_UPDATED,
+            { conversationId, ...update }
+        ),
+        pusherServer.trigger(
+            `private-conversation-${conversationId}`,
+            PUSHER_EVENTS.CONVERSATION_UPDATED,
+            { conversationId, ...update }
+        ),
+    ]);
 }

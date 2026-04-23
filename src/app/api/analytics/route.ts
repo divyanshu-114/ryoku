@@ -34,6 +34,7 @@ export async function GET(req: Request) {
         totalConversations,
         activeConversations,
         escalatedCount,
+        resolvedCount,
         totalMessages,
         avgRatingResult,
         recentEvents,
@@ -59,6 +60,14 @@ export async function GET(req: Request) {
             .where(and(
                 eq(conversations.businessId, business.id),
                 eq(conversations.status, "escalated"),
+                gte(conversations.createdAt, since)
+            )),
+        // Resolved conversations
+        db.select({ count: count() })
+            .from(conversations)
+            .where(and(
+                eq(conversations.businessId, business.id),
+                eq(conversations.status, "resolved"),
                 gte(conversations.createdAt, since)
             )),
         // Total messages in period
@@ -112,6 +121,7 @@ export async function GET(req: Request) {
             totalConversations: totalConversations[0]?.count || 0,
             activeConversations: activeConversations[0]?.count || 0,
             escalatedCount: escalatedCount[0]?.count || 0,
+            resolvedCount: resolvedCount[0]?.count || 0,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             totalMessages: (totalMessages.rows?.[0] as any)?.count || 0,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

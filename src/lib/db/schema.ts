@@ -134,6 +134,7 @@ export const conversations = pgTable(
             .references(() => businesses.id, { onDelete: "cascade" }),
         customerName: text("customer_name"),
         customerEmail: text("customer_email"),
+        customerPhone: text("customer_phone"),
         customerEmailVerified: boolean("customer_email_verified").default(false),
         emailVerificationOtp: text("email_verification_otp"),
         emailVerificationOtpExpiry: timestamp("email_verification_otp_expiry"),
