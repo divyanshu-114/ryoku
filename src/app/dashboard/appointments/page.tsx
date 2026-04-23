@@ -12,6 +12,7 @@ import {
     Clock,
     Plus,
 } from "lucide-react";
+import { showToast } from "@/lib/toast";
 
 interface Appt {
     id: string;
@@ -48,32 +49,56 @@ export default function AppointmentsPage() {
         setLoading(true);
         try {
             const res = await fetch("/api/appointments");
+            if (!res.ok) throw new Error("Failed to load appointments");
             const data = await res.json();
             setAppointments(data.appointments || []);
-        } catch { /* ignore */ }
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to load appointments", "error");
+        }
         finally { setLoading(false); }
     };
 
     useEffect(() => { fetchAppointments(); }, []);
 
     const createAppointment = async () => {
-        await fetch("/api/appointments", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...form, duration: parseInt(form.duration) }),
-        });
-        setShowForm(false);
-        setForm({ customerName: "", customerEmail: "", service: "", date: "", duration: "30" });
-        fetchAppointments();
+        if (!form.customerName.trim()) {
+            showToast("Customer name is required", "warning");
+            return;
+        }
+        if (!form.date) {
+            showToast("Date and time are required", "warning");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/appointments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...form, duration: parseInt(form.duration) }),
+            });
+            if (!res.ok) throw new Error("Failed to create appointment");
+            showToast("Appointment created successfully", "success");
+            setShowForm(false);
+            setForm({ customerName: "", customerEmail: "", service: "", date: "", duration: "30" });
+            fetchAppointments();
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to create appointment", "error");
+        }
     };
 
     const updateStatus = async (id: string, status: string) => {
-        await fetch("/api/appointments", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, status }),
-        });
-        fetchAppointments();
+        try {
+            const res = await fetch("/api/appointments", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status }),
+            });
+            if (!res.ok) throw new Error("Failed to update appointment");
+            showToast(`Appointment marked as ${status}`, "success");
+            fetchAppointments();
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to update appointment", "error");
+        }
     };
 
     if (authStatus === "loading" || loading) {

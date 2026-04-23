@@ -7,7 +7,11 @@ import { Resend } from "resend";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+}
 
 /**
  * GET /api/digest
@@ -17,6 +21,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * Vercel cron header: Authorization: Bearer CRON_SECRET
  */
 export async function GET(req: Request) {
+  const resend = getResendClient();
+  if (!resend) {
+    return NextResponse.json({ error: "RESEND_API_KEY is not configured" }, { status: 500 });
+  }
+
     // Verify cron secret (prevents public triggering)
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

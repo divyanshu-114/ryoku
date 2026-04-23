@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { businesses, conversations, messages, analyticsEvents } from "@/lib/db/schema";
+import { businesses, conversations, analyticsEvents } from "@/lib/db/schema";
 import { eq, and, sql, gte, count } from "drizzle-orm";
 
 // GET /api/analytics — Dashboard stats for the authenticated user's business

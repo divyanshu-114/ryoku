@@ -3,7 +3,6 @@
  * This file lives in /public so browsers can register it at the root scope.
  */
 
-// eslint-disable-next-line no-restricted-globals
 self.addEventListener("push", function (event) {
     if (!event.data) return;
 
@@ -23,12 +22,10 @@ self.addEventListener("push", function (event) {
     };
 
     event.waitUntil(
-        // eslint-disable-next-line no-restricted-globals
         self.registration.showNotification(data.title || "Ryoku", options)
     );
 });
 
-// eslint-disable-next-line no-restricted-globals
 self.addEventListener("notificationclick", function (event) {
     event.notification.close();
 
@@ -37,7 +34,6 @@ self.addEventListener("notificationclick", function (event) {
     const url = event.notification.data?.url || "/dashboard";
 
     event.waitUntil(
-        // eslint-disable-next-line no-restricted-globals, no-undef
         clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (clientList) {
             // Focus an existing window if open
             for (const client of clientList) {
@@ -47,7 +43,6 @@ self.addEventListener("notificationclick", function (event) {
                 }
             }
             // Otherwise open a new window
-            // eslint-disable-next-line no-undef
             return clients.openWindow(url);
         })
     );

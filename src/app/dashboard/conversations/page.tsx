@@ -15,6 +15,7 @@ import {
     ChevronRight,
     Search,
 } from "lucide-react";
+import { showToast } from "@/lib/toast";
 
 interface ConversationItem {
     id: string;
@@ -54,23 +55,26 @@ export default function ConversationsPage() {
             try {
                 let url = `/api/conversations?page=${page}&limit=20`;
                 if (statusFilter) url += `&status=${statusFilter}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("Failed to load conversations");
                 const data = await res.json();
                 setConversations(data.conversations || []);
                 setTotal(data.total || 0);
-            } catch { /* ignore */ }
+            } catch (err) {
+                showToast(err instanceof Error ? err.message : "Failed to load conversations", "error");
+                setConversations([]);
+                setTotal(0);
+            }
             finally { setLoading(false); }
         }
         fetchConversations();
-    }, [page, statusFilter]);
+    }, [page, statusFilter, search]);
 
-    const filtered = search
-        ? conversations.filter((c) =>
-            (c.customerName || "").toLowerCase().includes(search.toLowerCase()) ||
-            (c.customerEmail || "").toLowerCase().includes(search.toLowerCase()) ||
-            (c.summary || "").toLowerCase().includes(search.toLowerCase())
-        )
-        : conversations;
+    // Auto-reset to page 1 when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter, search]);
 
     const totalPages = Math.ceil(total / 20);
 
@@ -133,14 +137,14 @@ export default function ConversationsPage() {
                     <div className="flex justify-center py-12">
                         <Loader2 className="w-6 h-6 text-[var(--accent)] animate-spin" />
                     </div>
-                ) : filtered.length === 0 ? (
+                ) : conversations.length === 0 ? (
                     <div className="glass-card p-12 text-center">
                         <MessageSquare className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
                         <p className="text-sm text-[var(--text-secondary)]">No conversations found.</p>
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {filtered.map((convo, i) => {
+                        {conversations.map((convo, i) => {
                             const statusInfo = STATUS_CONFIG[convo.status || "active"] || STATUS_CONFIG.active;
                             const StatusIcon = statusInfo.icon;
                             return (

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { ArrowUpRight, ArrowRight, ShieldCheck, Zap, Globe, MessageSquare, BarChart3, RefreshCcw, Box } from "lucide-react";
 
 // ── Components ──
 
-const LetterReveal = ({ text, className, style, delay = 0 }: { text: string, className?: string, style?: any, delay?: number }) => {
+const LetterReveal = ({ text, className, style, delay = 0 }: { text: string, className?: string, style?: React.CSSProperties, delay?: number }) => {
   const letters = Array.from(text);
   return (
     <span className={className} style={style}>
@@ -86,6 +86,8 @@ const stagger: any = {
 };
 
 export default function LandingPage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.history.scrollRestoration = "manual";
@@ -595,139 +597,73 @@ export default function LandingPage() {
           whileInView="animate"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
-          className="max-w-[1400px] mx-auto"
+          className="max-w-[1400px] mx-auto flex flex-col items-center"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12 lg:gap-16 mb-20 lg:mb-24">
+          <div className="text-center mb-16 lg:mb-20">
             <motion.div variants={fadeUp}>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-4">
                 Pricing
               </p>
-              <div className="w-8 h-[1px] bg-[var(--border-dark)]" />
+              <div className="w-8 h-[1px] bg-[var(--border-dark)] mx-auto" />
             </motion.div>
             <motion.h2
               variants={fadeUp}
               style={{ fontFamily: "'Playfair Display', serif" }}
-              className="text-4xl md:text-5xl lg:text-[4rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1]"
+              className="text-4xl md:text-5xl lg:text-[4rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1] mt-6"
             >
-              Start free.
+              100% Free.
               <br />
-              <span className="italic">Scale as you grow.</span>
+              <span className="italic">Forever.</span>
             </motion.h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 lg:gap-10">
-            {[
-              {
-                name: "Free",
-                tagline: "For teams getting started",
-                icon: <MessageSquare className="w-6 h-6" />,
-                features: [
+
+          <div className="w-full max-w-lg mx-auto">
+            <motion.div
+              variants={fadeUp}
+              whileHover={{ y: -5, rotateX: 1, rotateY: 1 }}
+              style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+              className="p-10 md:p-12 border bg-[var(--text-primary)] border-[var(--text-primary)] shadow-2xl flex flex-col relative overflow-hidden group w-full"
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--accent)] opacity-10 blur-3xl pointer-events-none" />
+              
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-8 bg-white/10 text-[var(--accent)]">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+              
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-4 text-[var(--accent)]">
+                Free
+              </p>
+              <h3
+                style={{ fontFamily: "'Playfair Display', serif" }}
+                className="text-2xl md:text-3xl font-bold mb-4 italic leading-tight text-white"
+              >
+                Everything you need
+              </h3>
+              
+              <div className="w-full h-[1px] my-8 bg-white/10" />
+              
+              <ul className="space-y-5 mb-12 flex-1 relative z-10">
+                {[
                   "FAQ chatbot with knowledge base",
                   "Basic agent handoff",
                   "Dashboard & analytics",
                   "Unanswered question tracking",
                   "Community support",
-                ],
-                cta: "Get Started",
-                accent: false,
-              },
-              {
-                name: "Pro",
-                tagline: "For businesses with real customers",
-                icon: <Zap className="w-6 h-6" />,
-                features: [
-                  "Everything in Free",
-                  "Payment integrations",
-                  "Return & refund processing",
-                  "API & widget embed access",
-                  "Priority support",
-                ],
-                cta: "Get in Touch",
-                accent: true,
-              },
-              {
-                name: "Enterprise",
-                tagline: "Personalized for your business",
-                icon: <Globe className="w-6 h-6" />,
-                features: [
-                  "Everything in Pro",
-                  "Custom AI persona & training",
-                  "Dedicated onboarding team",
-                  "Appointment booking engine",
-                  "SLA guarantee",
-                ],
-                cta: "Contact Sales",
-                accent: false,
-              },
-            ].map((plan) => (
-              <motion.div
-                key={plan.name}
-                variants={fadeUp}
-                whileHover={{ y: -5, rotateX: 1, rotateY: 1 }}
-                style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
-                className={`p-10 md:p-12 border ${plan.accent ? "bg-[var(--text-primary)] border-[var(--text-primary)] shadow-2xl transform md:-translate-y-4" : "bg-white border-[var(--border-subtle)] shadow-sm"} flex flex-col relative overflow-hidden group`}
-              >
-                {plan.accent && (
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)] opacity-10 blur-3xl pointer-events-none" />
-                )}
-                <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-8 ${plan.accent ? "bg-white/10 text-[var(--accent)]" : "bg-[var(--bg-warm)] text-[var(--text-muted)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors"}`}
-                >
-                  {plan.icon}
-                </div>
-                <p
-                  className="text-[11px] font-bold uppercase tracking-[0.18em] mb-4"
-                  style={{
-                    color: plan.accent ? "var(--accent)" : "var(--text-muted)",
-                  }}
-                >
-                  {plan.name}
-                </p>
-                <h3
-                  style={{
-                    fontFamily: "'Playfair Display', serif",
-                    color: plan.accent ? "#fff" : "var(--text-primary)",
-                  }}
-                  className="text-2xl md:text-3xl font-bold mb-4 italic leading-tight"
-                >
-                  {plan.tagline}
-                </h3>
-                <div
-                  className="w-full h-[1px] my-8"
-                  style={{
-                    background: plan.accent
-                      ? "rgba(255,255,255,0.1)"
-                      : "var(--border-subtle)",
-                  }}
-                />
-                <ul className="space-y-5 mb-12 flex-1 relative z-10">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-4 text-[0.95rem]"
-                      style={{
-                        color: plan.accent
-                          ? "rgba(255,255,255,0.8)"
-                          : "var(--text-secondary)",
-                      }}
-                    >
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/auth/login" className="mt-auto block">
-                  <button
-                    className={`w-full py-4.5 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-3 group border ${plan.accent
-                      ? "bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20"
-                      : "bg-white border-[var(--border-dark)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-white"
-                      }`}
-                  >
-                    {plan.cta}
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </button>
-                </Link>
-              </motion.div>
-            ))}
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-4 text-[0.95rem] text-white/80">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              
+              <Link href="/auth/login" className="mt-auto block">
+                <button className="w-full py-4 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-3 group border bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20 cursor-pointer">
+                  Get Started
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </button>
+              </Link>
+            </motion.div>
           </div>
         </motion.div>
       </section>
@@ -752,13 +688,12 @@ export default function LandingPage() {
               style={{ fontFamily: "'Playfair Display', serif" }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight max-w-3xl"
             >
-              Start free. Upgrade
+              Start automating.
               <br />
-              <span className="italic">when you need to.</span>
+              <span className="italic">100% Free.</span>
             </h2>
             <p className="text-white/80 mt-6 md:mt-8 text-base md:text-lg max-w-md mx-auto md:mx-0 leading-relaxed font-medium">
-              Free tier includes FAQ answering and agent handoff. Upgrade to Pro
-              for payment integrations.
+              Ryoku provides a robust FAQ platform with agent handoff capabilities, completely free of charge. No credit card required.
             </p>
           </motion.div>
           <motion.div

@@ -3,6 +3,16 @@ import { db } from "@/lib/db";
 import { businesses, agents, conversations, messages as dbMessages, analyticsEvents } from "@/lib/db/schema";
 import { triggerConversationMessage, triggerNewConversation } from "@/lib/pusher";
 import { withRetry, generateEmbedding } from "@/lib/ai-provider";
+import { analyzeSentiment, trackKnowledgeGap, logAnalyticsEvent } from "@/lib/intelligence";
+import {
+    sanitizeUserInput,
+    wrapContext,
+    wrapUserMessage,
+    ANTI_INJECTION_PREAMBLE,
+    MAX_USER_MESSAGE_LENGTH,
+    capHistory,
+} from "@/lib/prompt-guard";
+import { searchWeb, fetchPage } from "@/lib/web-tools";
 import { eq, sql, and } from "drizzle-orm";
 import { getBusinessPlan } from "@/lib/billing";
 import { z } from "zod";
@@ -49,6 +59,7 @@ export async function POST(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const config = business.config as any;
         const persona = config?.persona || {};
+        const autoHandoffThreshold = Number(config?.autoHandoffConfidenceThreshold ?? 0.55);
 
         // Fetch business plan
         const plan = await getBusinessPlan(business.id);
@@ -65,13 +76,17 @@ export async function POST(
         // RAG retrieval
         let contextText = "";
         let userMessage = "";
+        let topSimilarity = 0;
+        let userSentiment: "positive" | "neutral" | "negative" | "frustrated" = "neutral";
         try {
             const lastMsg = messages[messages.length - 1];
             if (typeof lastMsg?.content === "string") {
-                userMessage = lastMsg.content;
+                // Sanitize + cap user input before any processing
+                userMessage = sanitizeUserInput(lastMsg.content.slice(0, MAX_USER_MESSAGE_LENGTH));
             } else if (lastMsg?.parts) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                userMessage = lastMsg.parts.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("");
+                const raw = lastMsg.parts.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("");
+                userMessage = sanitizeUserInput(raw.slice(0, MAX_USER_MESSAGE_LENGTH));
             }
 
             // -- Handle Conversation Persistence --
@@ -137,21 +152,40 @@ export async function POST(
                 LIMIT 8`
                     );
                     if (results.rows?.length) {
-                        contextText = results.rows.map((r) => r.content as string).join("\n\n");
+                        topSimilarity = Number(results.rows[0]?.similarity ?? 0);
+                        // Wrap context in XML delimiters so the LLM treats it as data, not instructions
+                        contextText = wrapContext(
+                            results.rows.map((r) => r.content as string).join("\n\n")
+                        );
                     }
                 }
+            }
+
+            if (userMessage) {
+                userSentiment = analyzeSentiment(userMessage);
             }
         } catch (err) {
             console.error("[RAG] Error:", err);
         }
 
+        const lowConfidence = !contextText || topSimilarity < autoHandoffThreshold;
+        if (userMessage && lowConfidence) {
+            await trackKnowledgeGap(business.id, userMessage);
+            await logAnalyticsEvent(business.id, "knowledge_gap", {
+                conversationId,
+                topSimilarity,
+                threshold: autoHandoffThreshold,
+            });
+        }
+
         // Build system prompt
-        let systemPrompt = `You are ${persona.name || business.name + " Assistant"}, a customer service AI for ${business.name} (${business.type} business).
+        let systemPrompt = `${ANTI_INJECTION_PREAMBLE}
+You are ${persona.name || business.name + " Assistant"}, a customer service AI for ${business.name} (${business.type} business).
 
 PERSONALITY: ${persona.personality || "Professional, friendly, and helpful"}
 
 BUSINESS CONTEXT:
-${contextText || "No specific context found."}
+${contextText ? contextText : "<business_context>\nNo specific context found.\n</business_context>"}
 
 CAPABILITIES: ${isPaid ? (persona.capabilities?.join(", ") || "Answer questions, help with orders and returns") : "Answer customer questions based on business context"}
 
@@ -164,10 +198,15 @@ RULES:
 - ${isPaid ? "You can help with orders and returns using the provided tools." : "You are an FAQ-only bot. You CANNOT look up orders or process returns. If the user asks about these, politely explain that they should contact support directly."}
 - ${config.canProcessReturns === "Yes" && isPaid ? "You CAN help process returns" : "Direct return requests to a human agent"}
 - ${config.canLookupOrders === "Yes" && isPaid ? "You CAN look up order status" : "Direct order queries to a human agent"}
+- If confidence is low OR the user seems frustrated, proactively offer to transfer to a human agent
 - Business hours: ${config.businessHours || "Not specified"}
 - For urgent issues, suggest emailing: ${config.escalationEmail || "support team"}
 
-Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`;
+REAL-TIME SIGNALS:
+- retrievalTopSimilarity=${topSimilarity.toFixed(2)} (threshold ${autoHandoffThreshold.toFixed(2)})
+- userSentiment=${userSentiment}
+
+Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
 
         if (!isPaid) {
             systemPrompt += "\n\nCRITICAL: You are on a FREE plan. You must strictly act as an FAQ bot. Do NOT attempt to help with orders, returns, or internal database queries as those features are disabled.";
@@ -175,9 +214,11 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
 
         // Stream response with tool calling
         return await withRetry(async (ai, modelId) => {
-            // Sanitize messages
+            // Cap history to prevent context-stuffing attacks
+            const cappedMessages = capHistory(messages);
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const cleanMessages = messages.map((m: any) => {
+            const cleanMessages = cappedMessages.map((m: any) => {
                 let content = "";
                 if (typeof m.content === "string") content = m.content;
                 else if (Array.isArray(m.content))
@@ -188,7 +229,8 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
 
                 return {
                     role: m.role === "system" || m.role === "tool" ? "user" : m.role,
-                    content,
+                    // Re-sanitize each turn (defence-in-depth)
+                    content: sanitizeUserInput(content.slice(0, MAX_USER_MESSAGE_LENGTH)),
                 };
             }).filter((m: { role: string; content: string }) => ["user", "assistant"].includes(m.role) && m.content.trim());
 
@@ -211,7 +253,8 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
             // Prepend system prompt
             const final = [...merged];
             if (final.length > 0 && final[0].role === "user") {
-                final[0].content = systemPrompt + "\n\n---\n\n" + final[0].content;
+                // Wrap user turn in XML tag to clearly separate it from system instructions
+                final[0].content = systemPrompt + "\n\n---\n\n" + wrapUserMessage(final[0].content);
             } else {
                 final.unshift({ role: "system", content: systemPrompt });
             }
@@ -228,7 +271,6 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
                                 orderId: z.string().optional().describe("The order ID"),
                                 email: z.string().optional().describe("Customer email"),
                             }),
-                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                             // @ts-expect-error Zod type mismatch with AI SDK
                             execute: async ({ orderId, email }: { orderId?: string; email?: string }) => {
                                 // Query orders table
@@ -254,7 +296,6 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
                                 reason: z.enum(["defective", "wrong_item", "changed_mind", "other"]).describe("Return reason"),
                                 details: z.string().optional().describe("Additional details"),
                             }),
-                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                             // @ts-expect-error Zod type mismatch with AI SDK
                             execute: async ({ orderId, reason, details }: { orderId?: string; reason?: string; details?: string }) => {
                                 return {
@@ -273,7 +314,6 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
                         parameters: z.object({
                             reason: z.string().describe("Why the customer needs a human agent"),
                         }),
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                         // @ts-expect-error Zod type mismatch with AI SDK
                         execute: async ({ reason }: { reason?: string }) => {
                             // Check for online agents
@@ -336,7 +376,6 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
                             phone: z.string().optional().describe("Customer phone"),
                             name: z.string().optional().describe("Customer name"),
                         }),
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                         // @ts-expect-error Zod type mismatch with AI SDK
                         execute: async ({ email, phone, name }: { email?: string; phone?: string; name?: string }) => {
                             return {
@@ -347,14 +386,48 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you today?"}`
                             };
                         },
                     }),
+                    searchWeb: tool({
+                        description: "Search the web for live, up-to-date information to answer a customer question. Use this when the knowledge base doesn't have a good answer.",
+                        parameters: z.object({
+                            query: z.string().describe("The search query"),
+                        }),
+                        // @ts-expect-error Zod type mismatch with AI SDK
+                        execute: async ({ query }: { query: string }) => {
+                            const result = await searchWeb(sanitizeUserInput(query.slice(0, 200)));
+                            return result;
+                        },
+                    }),
+                    fetchPage: tool({
+                        description: "Fetch the content of a specific web page URL to answer questions about it.",
+                        parameters: z.object({
+                            url: z.string().describe("The full URL to fetch (must start with http:// or https://)"),
+                        }),
+                        // @ts-expect-error Zod type mismatch with AI SDK
+                        execute: async ({ url }: { url: string }) => {
+                            return fetchPage(url);
+                        },
+                    }),
                 },
                 onFinish: async ({ text, toolCalls, toolResults }) => {
                     if (conversationId) {
+                        if (lowConfidence && userSentiment === "frustrated") {
+                            await db.update(conversations)
+                                .set({ status: "escalated", updatedAt: new Date() })
+                                .where(eq(conversations.id, conversationId));
+
+                            await logAnalyticsEvent(business.id, "smart_handoff_triggered", {
+                                conversationId,
+                                topSimilarity,
+                                threshold: autoHandoffThreshold,
+                                userSentiment,
+                            });
+                        }
+
                         await db.insert(dbMessages).values({
                             conversationId,
                             role: "assistant",
                             content: text || "",
-                            metadata: { toolCalls, toolResults }
+                            metadata: { toolCalls, toolResults, topSimilarity, lowConfidence, userSentiment }
                         });
                         
                         await triggerConversationMessage(conversationId, {

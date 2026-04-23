@@ -100,7 +100,7 @@ export function getFaqPack(businessType: string): FaqItem[] {
  */
 export const DEFAULT_CONFIG: Record<string, Record<string, string>> = {
   ecommerce: {
-    welcomeMessage: "Hi there! 👋 I can help you track orders, process returns, or answer any questions about our products. What do you need?",
+    welcomeMessage: "Hi there! 👋 I can help with questions about our products and policies. What do you need?",
     businessHours: "Mon–Fri 9am–6pm",
     canProcessReturns: "Yes",
     canLookupOrders: "Yes",

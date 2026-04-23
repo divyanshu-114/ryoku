@@ -19,6 +19,7 @@ import {
     ArrowLeft,
     AlertCircle,
 } from "lucide-react";
+import { showToast } from "@/lib/toast";
 
 interface WebhookEndpoint {
     id: string;
@@ -60,12 +61,26 @@ export default function WebhooksPage() {
     const [submitting, setSubmitting] = useState(false);
 
     const fetchData = useCallback(async (businessSlug: string) => {
-        const [epRes, retRes] = await Promise.all([
-            fetch(`/api/webhook-endpoints?slug=${businessSlug}`),
-            fetch(`/api/returns?slug=${businessSlug}`),
-        ]);
-        if (epRes.ok) { const d = await epRes.json(); setEndpoints(d.endpoints || []); }
-        if (retRes.ok) { const d = await retRes.json(); setReturns(d.returns || []); }
+        try {
+            const [epRes, retRes] = await Promise.all([
+                fetch(`/api/webhook-endpoints?slug=${businessSlug}`),
+                fetch(`/api/returns?slug=${businessSlug}`),
+            ]);
+            if (epRes.ok) {
+                const d = await epRes.json();
+                setEndpoints(d.endpoints || []);
+            } else {
+                showToast("Failed to load webhook endpoints", "error");
+            }
+            if (retRes.ok) {
+                const d = await retRes.json();
+                setReturns(d.returns || []);
+            } else {
+                showToast("Failed to load return requests", "error");
+            }
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to load data", "error");
+        }
         setLoading(false);
     }, []);
 
@@ -74,22 +89,36 @@ export default function WebhooksPage() {
         if (status !== "authenticated") return;
 
         const fetchBusiness = async () => {
-            const res = await fetch("/api/profile");
-            if (res.ok) {
+            try {
+                const res = await fetch("/api/profile");
+                if (!res.ok) throw new Error("Failed to load business profile");
                 const data = await res.json();
                 if (data.business) {
                     setSlug(data.business.slug);
                     fetchData(data.business.slug);
                 } else {
+                    showToast("Business not found", "error");
                     router.push("/dashboard");
                 }
+            } catch (err) {
+                showToast(err instanceof Error ? err.message : "Failed to load business profile", "error");
+                router.push("/dashboard");
             }
         };
         fetchBusiness();
     }, [status, router, fetchData]);
 
     const handleCreate = async () => {
-        if (!slug || !formData.name || !formData.url) return;
+        if (!slug || !formData.name || !formData.url) {
+            showToast("Please fill in all required fields", "warning");
+            return;
+        }
+        try {
+            new URL(formData.url); // Validate URL format
+        } catch {
+            showToast("Please enter a valid URL", "warning");
+            return;
+        }
         setSubmitting(true);
         try {
             const res = await fetch("/api/webhook-endpoints", {
@@ -102,44 +131,67 @@ export default function WebhooksPage() {
                     events: formData.events === "*" ? ["*"] : formData.events.split(",").map(e => e.trim()),
                 }),
             });
+            if (!res.ok) throw new Error("Failed to create endpoint");
             const data = await res.json();
-            if (res.ok) {
+            if (data.endpoint) {
                 setNewSecret(data.endpoint.signingSecret);
                 setShowForm(false);
                 setFormData({ name: "", url: "", events: "*" });
+                showToast("Webhook endpoint created successfully", "success");
                 fetchData(slug);
             }
-        } finally {
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to create endpoint", "error");
+        }
+        finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!slug || !confirm("Remove this webhook endpoint?")) return;
-        await fetch(`/api/webhook-endpoints?id=${id}&slug=${slug}`, { method: "DELETE" });
-        setEndpoints(prev => prev.filter(e => e.id !== id));
+        if (!slug || !confirm("Remove this webhook endpoint? This cannot be undone.")) return;
+        try {
+            const res = await fetch(`/api/webhook-endpoints?id=${id}&slug=${slug}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete endpoint");
+            setEndpoints(prev => prev.filter(e => e.id !== id));
+            showToast("Webhook endpoint removed", "success");
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to delete endpoint", "error");
+        }
     };
 
     const handleToggle = async (id: string, active: boolean) => {
         if (!slug) return;
-        await fetch("/api/webhook-endpoints", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, slug, active: !active }),
-        });
-        setEndpoints(prev => prev.map(e => e.id === id ? { ...e, active: !active } : e));
+        try {
+            const res = await fetch("/api/webhook-endpoints", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, slug, active: !active }),
+            });
+            if (!res.ok) throw new Error("Failed to update endpoint");
+            setEndpoints(prev => prev.map(e => e.id === id ? { ...e, active: !active } : e));
+            showToast(`Endpoint ${!active ? "enabled" : "disabled"}`, "success");
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to update endpoint", "error");
+        }
     };
 
     const handlePing = async (id: string) => {
         if (!slug) return;
-        setPingResult(prev => ({ ...prev, [id]: null }));
-        const res = await fetch("/api/webhook-endpoints/test", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, slug }),
-        });
-        const data = await res.json();
-        setPingResult(prev => ({ ...prev, [id]: data }));
+        try {
+            setPingResult(prev => ({ ...prev, [id]: null }));
+            const res = await fetch("/api/webhook-endpoints/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, slug }),
+            });
+            if (!res.ok) throw new Error("Failed to send test ping");
+            const data = await res.json();
+            setPingResult(prev => ({ ...prev, [id]: data }));
+            showToast(data.success ? "Ping delivered successfully" : `Ping failed: ${data.error}`, data.success ? "success" : "error");
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to send ping", "error");
+        }
     };
 
     const statusBadge = (s: string) => {

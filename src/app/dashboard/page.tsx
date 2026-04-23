@@ -237,15 +237,13 @@ export default function DashboardPage() {
         businessName: "",
         businessType: "",
         websiteUrl: "",
-        welcomeMessage: "Hi! How can I help you today?",
+        welcomeMessage: "Hi! How can I help you?",
         accentColor: "#6366f1",
         faqs: [{ question: "", answer: "" }],
         faqFile: null,
         // Support config
         businessHours: "Mon-Fri 9am-5pm",
         escalationEmail: "",
-        canProcessReturns: "Yes",
-        canLookupOrders: "Yes",
     });
 
     // Redirect if not authenticated
@@ -483,14 +481,12 @@ export default function DashboardPage() {
                 businessName: "",
                 businessType: "",
                 websiteUrl: "",
-                welcomeMessage: "Hi! How can I help you today?",
+                welcomeMessage: "Hi! How can I help you?",
                 accentColor: "#6366f1",
                 faqs: [{ question: "", answer: "" }],
                 faqFile: null,
                 businessHours: "Mon-Fri 9am-5pm",
                 escalationEmail: "",
-                canProcessReturns: "Yes",
-                canLookupOrders: "Yes",
             });
         } catch {
             setError("Failed to delete");
@@ -681,35 +677,11 @@ export default function DashboardPage() {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Can bot process returns?</label>
-                                <select
-                                    className="input-field"
-                                    value={(config.canProcessReturns as string) || "Yes"}
-                                    onChange={(e) => updateConfig("canProcessReturns", e.target.value)}
-                                >
-                                    <option value="Yes">Yes</option>
-                                    <option value="No">No — direct to agent</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Can bot look up orders?</label>
-                                <select
-                                    className="input-field"
-                                    value={(config.canLookupOrders as string) || "Yes"}
-                                    onChange={(e) => updateConfig("canLookupOrders", e.target.value)}
-                                >
-                                    <option value="Yes">Yes</option>
-                                    <option value="No">No</option>
-                                </select>
-                            </div>
-                        </div>
                         <div>
                             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Welcome Message</label>
                             <input
                                 className="input-field"
-                                placeholder="Hi! How can I help you today?"
+                                placeholder="Hi! How can I help you?"
                                 value={config.welcomeMessage}
                                 onChange={(e) => updateConfig("welcomeMessage", e.target.value)}
                             />
@@ -1022,8 +994,6 @@ export default function DashboardPage() {
                             { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations", desc: "Chat history", free: true },
                             { href: "/dashboard/agent", icon: Headphones, label: "Agent Workspace", desc: "Live chat & handoff", free: true },
                             { href: "/dashboard/billing", icon: CreditCard, label: "Billing", desc: "Plans & subscription", free: true },
-                            { href: "/dashboard/appointments", icon: CalendarDays, label: "Appointments", desc: "Booking calendar", free: false },
-                            { href: "/dashboard/webhooks", icon: Globe, label: "Webhooks", desc: "Return & refund bridge", free: false },
                         ].filter(item => item.free || (existingBusiness?.planName?.toLowerCase() === "paid")).map(({ href, icon: Icon, label, desc }) => (
                             <button
                                 key={href}

@@ -1,5 +1,5 @@
 import { db } from "../src/lib/db";
-import { businesses, subscriptions, billingPlans, users } from "../src/lib/db/schema";
+import { businesses, users } from "../src/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 async function recreate() {
@@ -23,31 +23,15 @@ async function recreate() {
     }
 
     console.log("Creating business alu...");
-    const [biz] = await db.insert(businesses).values({
+    await db.insert(businesses).values({
         userId: user.id,
         slug,
         name: "amazon",
         type: "ecommerce",
         config: {
             persona: { name: "Amazon Bot", personality: "Helpful assistant" },
-            canLookupOrders: "Yes",
-            canProcessReturns: "Yes",
         },
         branding: { welcomeMessage: "Welcome to Amazon!" },
-    }).returning();
-
-    const [freePlan] = await db.select().from(billingPlans).where(eq(billingPlans.name, "Free")).limit(1);
-    
-    if (!freePlan) {
-        console.error("Free plan not found. Run seed-plans.ts first.");
-        process.exit(1);
-    }
-
-    console.log("Assigning Free plan to alu...");
-    await db.insert(subscriptions).values({
-        businessId: biz.id,
-        planId: freePlan.id,
-        status: "active",
     });
 
     console.log("Re-seeding complete!");
@@ -55,3 +39,4 @@ async function recreate() {
 }
 
 recreate().catch(console.error);
+

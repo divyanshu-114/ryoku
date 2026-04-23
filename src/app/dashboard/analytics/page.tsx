@@ -16,6 +16,7 @@ import {
     Loader2,
     Activity,
 } from "lucide-react";
+import { showToast } from "@/lib/toast";
 
 interface Stats {
     totalConversations: number;
@@ -60,13 +61,18 @@ export default function AnalyticsPage() {
             setLoading(true);
             try {
                 const res = await fetch(`/api/analytics?period=${period}`);
+                if (!res.ok) throw new Error("Failed to load analytics");
                 const data = await res.json();
                 setStats(data.stats);
                 setDaily(data.dailyConversations || []);
                 setEvents(data.eventBreakdown || []);
                 setSentiment(data.sentimentBreakdown || []);
-            } catch {
-                // Error handling
+            } catch (err) {
+                showToast(err instanceof Error ? err.message : "Failed to load analytics", "error");
+                setStats(null);
+                setDaily([]);
+                setEvents([]);
+                setSentiment([]);
             } finally {
                 setLoading(false);
             }
@@ -75,8 +81,15 @@ export default function AnalyticsPage() {
     }, [period]);
 
     const handleExport = async (format: string) => {
-        const days = period === "30d" ? 30 : period === "90d" ? 90 : 7;
-        window.open(`/api/analytics/export?format=${format}&days=${days}`, "_blank");
+        try {
+            const days = period === "30d" ? 30 : period === "90d" ? 90 : 7;
+            const res = await fetch(`/api/analytics/export?format=${format}&days=${days}`);
+            if (!res.ok) throw new Error("Failed to export data");
+            showToast(`Analytics exported as ${format.toUpperCase()}`, "success");
+            window.open(`/api/analytics/export?format=${format}&days=${days}`, "_blank");
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to export analytics", "error");
+        }
     };
 
     if (status === "loading" || loading) {

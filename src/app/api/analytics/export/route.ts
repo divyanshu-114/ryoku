@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { businesses, conversations, messages } from "@/lib/db/schema";
-import { eq, and, desc, sql, gte } from "drizzle-orm";
+import { eq, and, desc, gte } from "drizzle-orm";
 
 // GET /api/analytics/export — Export conversations as CSV or JSON
 export async function GET(req: Request) {

@@ -8,9 +8,6 @@ import {
     Send,
     Bot,
     Loader2,
-    RotateCcw,
-    Package,
-    Headphones,
     ThumbsUp,
     ThumbsDown,
     ArrowDown,
@@ -49,7 +46,7 @@ export default function ChatPage() {
     };
 
     const [accentColor] = useState("var(--accent)");
-    const [welcomeMessage] = useState("Hi! How can I help you today?");
+    const [welcomeMessage] = useState("Hi! How can I help you?");
     const [showScrollBtn, setShowScrollBtn] = useState(false);
     const [rated, setRated] = useState<"up" | "down" | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -92,17 +89,6 @@ export default function ChatPage() {
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    // Quick actions
-    const quickActions = [
-        { label: "Track Order", icon: Package, message: "I'd like to track my order" },
-        { label: "Return Item", icon: RotateCcw, message: "I want to return a product" },
-        { label: "Talk to Agent", icon: Headphones, message: "I'd like to speak with a human agent" },
-    ];
-
-    const sendQuickAction = (message: string) => {
-        sendMessage({ text: message });
     };
 
     return (
@@ -157,25 +143,6 @@ export default function ChatPage() {
                             >
                                 {welcomeMessage}
                             </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="flex flex-wrap gap-2 pl-11">
-                            {quickActions.map((action) => (
-                                <button
-                                    key={action.label}
-                                    onClick={() => sendQuickAction(action.message)}
-                                    className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium transition-all cursor-pointer hover:scale-[1.02]"
-                                    style={{
-                                        background: "var(--accent-glow)",
-                                        border: `1px solid ${accentColor}40`,
-                                        color: "var(--accent-light)",
-                                    }}
-                                >
-                                    <action.icon className="w-3.5 h-3.5" />
-                                    {action.label}
-                                </button>
-                            ))}
                         </div>
                     </motion.div>
                 )}

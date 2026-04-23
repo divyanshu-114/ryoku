@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { businesses, subscriptions, billingPlans } from "@/lib/db/schema";
+import { businesses } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
@@ -19,15 +19,14 @@ export async function GET() {
             type: businesses.type,
             config: businesses.config,
             branding: businesses.branding,
-            planName: billingPlans.name,
         })
         .from(businesses)
-        .leftJoin(subscriptions, eq(businesses.id, subscriptions.businessId))
-        .leftJoin(billingPlans, eq(subscriptions.planId, billingPlans.id))
         .where(eq(businesses.userId, session.user.id))
         .limit(1);
 
-    return NextResponse.json({ business: business || null });
+    const businessWithPlan = business ? { ...business, planName: "Free" } : null;
+
+    return NextResponse.json({ business: businessWithPlan });
 }
 
 // DELETE: delete current user's business

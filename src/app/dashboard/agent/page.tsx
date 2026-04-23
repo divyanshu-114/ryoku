@@ -17,6 +17,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher";
+import { showToast } from "@/lib/toast";
 
 interface AgentProfile {
     id: string;
@@ -74,6 +75,7 @@ export default function AgentDashboardPage() {
         async function initAgent() {
             try {
                 const res = await fetch("/api/agent");
+                if (!res.ok) throw new Error("Failed to load agent profile");
                 const data = await res.json();
                 if (data.agent) {
                     setAgent(data.agent);
@@ -85,13 +87,18 @@ export default function AgentDashboardPage() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({}),
                     });
+                    if (!regRes.ok) throw new Error("Failed to register as agent");
                     const regData = await regRes.json();
                     if (regData.agent) {
                         setAgent(regData.agent);
                         setAgentStatus(regData.agent.status);
+                    } else {
+                        throw new Error("Agent registration returned no data");
                     }
                 }
-            } catch { /* ignore */ }
+            } catch (err) {
+                showToast(err instanceof Error ? err.message : "Failed to load agent", "error");
+            }
             finally { setLoading(false); }
         }
         if (authStatus === "authenticated") initAgent();
@@ -101,9 +108,12 @@ export default function AgentDashboardPage() {
     const fetchQueue = useCallback(async () => {
         try {
             const res = await fetch("/api/agent/conversations?view=all");
+            if (!res.ok) throw new Error("Failed to load conversation queue");
             const data = await res.json();
             setQueue(data.conversations || []);
-        } catch { /* ignore */ }
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to load queue", "error");
+        }
     }, []);
 
     useEffect(() => {
@@ -114,7 +124,7 @@ export default function AgentDashboardPage() {
             const pusher = getPusherClient();
             const channel = pusher.subscribe(`private-business-${agent.businessId}`);
 
-            channel.bind(PUSHER_EVENTS.NEW_CONVERSATION, (data: any) => {
+            channel.bind(PUSHER_EVENTS.NEW_CONVERSATION, (data: QueueConvo) => {
                 setQueue((prev) => {
                     // Check if already in queue
                     if (prev.find((c) => c.id === data.id)) return prev;
@@ -124,8 +134,19 @@ export default function AgentDashboardPage() {
 
             channel.bind(PUSHER_EVENTS.AGENT_STATUS, (data: { agentId: string; status: string }) => {
                 if (data.agentId === agent.id) {
-                    setAgentStatus(data.status as any);
+                    setAgentStatus(data.status);
                 }
+            });
+
+            channel.bind(PUSHER_EVENTS.HANDOFF, (data: { conversationId: string; reason?: string }) => {
+                setQueue((prev) => 
+                    prev.map(c => 
+                        c.id === data.conversationId 
+                            ? { ...c, status: "escalated" } 
+                            : c
+                    )
+                );
+                showToast(`New handoff request: ${data.reason || "Customer needs an agent"}`, "success");
             });
 
             return () => {
@@ -141,9 +162,12 @@ export default function AgentDashboardPage() {
         async function fetchCanned() {
             try {
                 const res = await fetch("/api/canned-responses");
+                if (!res.ok) throw new Error("Failed to load canned responses");
                 const data = await res.json();
                 setCannedResponses(data.responses || []);
-            } catch { /* ignore */ }
+            } catch (err) {
+                showToast(err instanceof Error ? err.message : "Failed to load canned responses", "error");
+            }
         }
         if (agent) fetchCanned();
     }, [agent]);
@@ -154,9 +178,12 @@ export default function AgentDashboardPage() {
             if (!selectedConvo) return;
             try {
                 const res = await fetch(`/api/conversations/${selectedConvo}`);
+                if (!res.ok) throw new Error("Failed to load messages");
                 const data = await res.json();
                 setChatMessages(data.messages || []);
-            } catch { /* ignore */ }
+            } catch (err) {
+                showToast(err instanceof Error ? err.message : "Failed to load conversation", "error");
+            }
         }
         loadMessages();
     }, [selectedConvo]);
@@ -194,12 +221,18 @@ export default function AgentDashboardPage() {
     // Toggle agent status
     const toggleStatus = async () => {
         const next = agentStatus === "online" ? "away" : agentStatus === "away" ? "offline" : "online";
-        await fetch("/api/agent", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: next }),
-        });
-        setAgentStatus(next);
+        try {
+            const res = await fetch("/api/agent", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: next }),
+            });
+            if (!res.ok) throw new Error("Failed to update status");
+            setAgentStatus(next);
+            showToast(`Status changed to ${next}`, "success");
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to update status", "error");
+        }
     };
 
     // Send message
@@ -210,17 +243,20 @@ export default function AgentDashboardPage() {
         setInput("");
 
         try {
-            await fetch("/api/agent/messages", {
+            const res = await fetch("/api/agent/messages", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ conversationId: selectedConvo, content }),
             });
+            if (!res.ok) throw new Error("Failed to send message");
             // Message will appear via Pusher, but also add locally for instant feedback
             setChatMessages((prev) => [
                 ...prev,
                 { id: Date.now(), role: "agent", content, sentiment: null, createdAt: new Date().toISOString() },
             ]);
-        } catch { /* ignore */ }
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to send message", "error");
+        }
         finally { setSending(false); }
     };
 

@@ -76,3 +76,16 @@ export async function triggerNewConversation(
         conversation
     );
 }
+
+// ── Helper: notify business of an agent handoff request ──
+export async function triggerHandoff(
+    businessId: string,
+    conversationId: string,
+    reason?: string
+) {
+    await pusherServer.trigger(
+        `private-business-${businessId}`,
+        PUSHER_EVENTS.HANDOFF,
+        { conversationId, reason }
+    );
+}

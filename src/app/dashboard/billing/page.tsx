@@ -2,99 +2,38 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
     ArrowLeft,
     Loader2,
     CreditCard,
-    Check,
-    AlertCircle,
-    ExternalLink,
     Zap,
+    Mail,
 } from "lucide-react";
-
-interface Plan {
-    id: string;
-    name: string;
-    monthlyPrice: number;
-    maxConversations: number;
-    maxApiKeys: number;
-    features: string[];
-}
-
-interface Sub {
-    id: string;
-    planId: string;
-    status: string;
-    currentPeriodEnd: string | null;
-}
+import { ContactDialog } from "@/components/ContactDialog";
 
 function BillingContent() {
     const { status: authStatus } = useSession();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const [loading, setLoading] = useState(true);
-    const [plans, setPlans] = useState<Plan[]>([]);
-    const [subscription, setSubscription] = useState<Sub | null>(null);
-    const [checkingOut, setCheckingOut] = useState(false);
+    const [contactDialogOpen, setContactDialogOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<"Pro" | "Enterprise">("Pro");
 
-    const success = searchParams.get("success") === "true";
-    const cancelled = searchParams.get("cancelled") === "true";
+    const openContact = (plan: "Pro" | "Enterprise") => {
+        setSelectedPlan(plan);
+        setContactDialogOpen(true);
+    };
 
     useEffect(() => {
         if (authStatus === "unauthenticated") router.push("/auth/login");
     }, [authStatus, router]);
 
-    useEffect(() => {
-        async function fetchBilling() {
-            try {
-                const res = await fetch("/api/billing");
-                const data = await res.json();
-                setPlans(data.plans || []);
-                setSubscription(data.subscription || null);
-            } catch { /* ignore */ }
-            finally { setLoading(false); }
-        }
-        fetchBilling();
-    }, []);
-
-    const handleCheckout = async (planId: string) => {
-        setCheckingOut(true);
-        try {
-            const res = await fetch("/api/billing", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "checkout", planId }),
-            });
-            const data = await res.json();
-            if (data.url) window.location.href = data.url;
-        } catch { /* ignore */ }
-        finally { setCheckingOut(false); }
-    };
-
-    const handlePortal = async () => {
-        const res = await fetch("/api/billing", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "portal" }),
-        });
-        const data = await res.json();
-        if (data.url) window.location.href = data.url;
-    };
-
-    if (authStatus === "loading" || loading) {
+    if (authStatus === "loading") {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-[var(--accent)] animate-spin" />
             </div>
         );
     }
-
-    // Default plans if none in DB yet
-    const displayPlans = plans.length > 0 ? plans : [
-        { id: "free", name: "Free", monthlyPrice: 0, maxConversations: 1000, maxApiKeys: 1, features: ["FAQ chatbot only", "No order tracking/returns", "Basic analytics", "Community support"] },
-        { id: "paid", name: "Paid", monthlyPrice: 4900, maxConversations: -1, maxApiKeys: 10, features: ["Fully customizable AI", "Order & payment integrations", "Return & refund processing", "Advanced analytics", "Priority support", "Remove Ryoku branding"] },
-    ];
 
     return (
         <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
@@ -112,83 +51,224 @@ function BillingContent() {
                     <h1 className="text-3xl font-bold text-[var(--text-primary)]">Plans & Pricing</h1>
                 </div>
 
-                {/* Status messages */}
-                {success && (
-                    <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                        <Check className="w-5 h-5 text-[var(--success)]" />
-                        <p className="text-sm text-[var(--success)]">Subscription activated successfully!</p>
-                    </div>
-                )}
-                {cancelled && (
-                    <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                        <AlertCircle className="w-5 h-5 text-[var(--danger)]" />
-                        <p className="text-sm text-[var(--danger)]">Checkout was cancelled.</p>
-                    </div>
-                )}
-
-                {/* Current subscription */}
-                {subscription && (
-                    <div className="glass-card p-6 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-[var(--text-muted)]">Current Plan</p>
-                            <p className="text-lg font-bold text-[var(--text-primary)] capitalize">{subscription.status}</p>
-                            {subscription.currentPeriodEnd && (
-                                <p className="text-xs text-[var(--text-muted)]">
-                                    Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                                </p>
-                            )}
+                {/* Plans Grid - All Three Tiers */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Free Plan */}
+                    <div className="glass-card p-6 flex flex-col">
+                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Free</h3>
+                        <p className="text-xs text-[var(--text-muted)] mb-4">For teams getting started</p>
+                        <div className="mb-4">
+                            <span className="text-3xl font-bold text-[var(--text-primary)]">$0</span>
+                            <span className="text-sm text-[var(--text-muted)]">/month</span>
                         </div>
-                        <button onClick={handlePortal} className="btn-secondary py-2 px-4 text-xs flex items-center gap-2">
-                            <ExternalLink className="w-3.5 h-3.5" /> Manage Subscription
+                        <ul className="space-y-2 flex-1 mb-6">
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                FAQ chatbot with knowledge base
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Basic agent handoff
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Dashboard & analytics
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Unanswered question tracking
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Community support
+                            </li>
+                        </ul>
+                        <div className="text-center py-2.5 text-xs font-medium text-[var(--accent-light)]">
+                            Your Current Plan
+                        </div>
+                    </div>
+
+                    {/* Pro Plan */}
+                    <div className="glass-card p-6 flex flex-col ring-2 ring-[var(--accent)] glow-accent">
+                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Pro</h3>
+                        <p className="text-xs text-[var(--text-muted)] mb-4">For businesses with real customers</p>
+                        <div className="mb-4">
+                            <span className="text-2xl text-[var(--text-muted)]">Custom</span>
+                            <p className="text-xs text-[var(--text-muted)]">Based on your needs</p>
+                        </div>
+                        <ul className="space-y-2 flex-1 mb-6">
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                <span><strong>Everything in Free</strong></span>
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Payment integrations
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Return & refund processing
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                API & widget embed access
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Priority support
+                            </li>
+                        </ul>
+                        <button
+                            onClick={() => openContact("Pro")}
+                            className="btn-primary py-2.5 text-xs font-medium flex items-center justify-center gap-2"
+                        >
+                            <Mail className="w-4 h-4" />
+                            Get in Touch
                         </button>
                     </div>
-                )}
 
-                {/* Plans Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                    {displayPlans.map((plan, i) => {
-                        const isPaid = plan.name === "Paid";
-                        const isCurrent = subscription?.planId === plan.id;
+                    {/* Enterprise Plan */}
+                    <div className="glass-card p-6 flex flex-col">
+                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Enterprise</h3>
+                        <p className="text-xs text-[var(--text-muted)] mb-4">Personalized for your business</p>
+                        <div className="mb-4">
+                            <span className="text-2xl text-[var(--text-muted)]">Custom</span>
+                            <p className="text-xs text-[var(--text-muted)]">Contact for pricing</p>
+                        </div>
+                        <ul className="space-y-2 flex-1 mb-6">
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                <span><strong>Everything in Pro</strong></span>
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Custom AI persona & training
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Dedicated onboarding team
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                Appointment booking engine
+                            </li>
+                            <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                                <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                                SLA guarantee
+                            </li>
+                        </ul>
+                        <button
+                            onClick={() => openContact("Enterprise")}
+                            className="btn-primary py-2.5 text-xs font-medium flex items-center justify-center gap-2"
+                        >
+                            <Mail className="w-4 h-4" />
+                            Contact Sales
+                        </button>
+                    </div>
+                </div>
 
-                        return (
-                            <div
-                                key={plan.id}
-                                className={`glass-card p-6 flex flex-col relative ${isPaid ? "ring-2 ring-[var(--accent)] glow-accent" : ""}`}
-                            >
-                                {isPaid && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase" style={{ background: "var(--accent)", color: "white" }}>
-                                        Full Customization
-                                    </div>
-                                )}
-                                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{plan.name}</h3>
-                                <div className="mb-4">
-                                    <span className="text-3xl font-bold text-[var(--text-primary)]">${(plan.monthlyPrice / 100).toFixed(0)}</span>
-                                    <span className="text-sm text-[var(--text-muted)]">/mo</span>
-                                </div>
-                                <ul className="space-y-2 flex-1 mb-6">
-                                    {plan.features.map((f, fi) => (
-                                        <li key={fi} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                                            <Zap className="w-3 h-3 text-[var(--accent)] shrink-0" />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {isCurrent ? (
-                                    <div className="btn-secondary py-2.5 text-center text-xs opacity-50">Current Plan</div>
-                                ) : (
-                                    <button
-                                        onClick={() => handleCheckout(plan.id)}
-                                        disabled={checkingOut}
-                                        className={`${isPaid ? "btn-primary" : "btn-secondary"} py-2.5 text-xs text-center`}
-                                    >
-                                        {checkingOut ? "Loading..." : plan.monthlyPrice === 0 ? "Get Started" : "Upgrade"}
-                                    </button>
-                                )}
-                            </div>
-                        );
-                    })}
+                {/* What's Included Section */}
+                <div className="glass-card p-6">
+                    <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">Plan Comparison</h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-white/10">
+                                    <th className="text-left py-3 px-2 font-semibold text-[var(--text-secondary)]">Feature</th>
+                                    <th className="text-center py-3 px-2 font-semibold text-[var(--text-secondary)]">Free</th>
+                                    <th className="text-center py-3 px-2 font-semibold text-[var(--text-secondary)]">Pro</th>
+                                    <th className="text-center py-3 px-2 font-semibold text-[var(--text-secondary)]">Enterprise</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">FAQ Chatbot</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Agent Handoff</td>
+                                    <td className="text-center text-[var(--accent)]">Basic</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Payment Integrations</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Return & Refund Processing</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">API & Widget Access</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Analytics Dashboard</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Custom AI Training</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Appointment Booking</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--text-muted)]">✗</td>
+                                    <td className="text-center text-[var(--accent)]">✓</td>
+                                </tr>
+                                <tr>
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Support</td>
+                                    <td className="text-center text-[var(--text-secondary)]">Community</td>
+                                    <td className="text-center text-[var(--accent)]">Priority</td>
+                                    <td className="text-center text-[var(--accent)]">Dedicated + SLA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Support Section */}
+                <div className="glass-card p-6">
+                    <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2">Ready to Scale?</h2>
+                    <p className="text-sm text-[var(--text-secondary)] mb-4">
+                        Start with our free plan and upgrade to Pro or Enterprise as your business grows. Each plan is designed to scale with you.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-[var(--text-secondary)]">
+                        <div>
+                            <strong className="text-[var(--text-primary)]">Free</strong>
+                            <p className="mt-1">Perfect for getting started and testing the platform</p>
+                        </div>
+                        <div>
+                            <strong className="text-[var(--text-primary)]">Pro</strong>
+                            <p className="mt-1">For businesses ready to process payments and handle returns</p>
+                        </div>
+                        <div>
+                            <strong className="text-[var(--text-primary)]">Enterprise</strong>
+                            <p className="mt-1">For established businesses needing custom solutions</p>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Contact Dialog */}
+            <ContactDialog
+                isOpen={contactDialogOpen}
+                onClose={() => setContactDialogOpen(false)}
+                plan={selectedPlan}
+            />
         </main>
     );
 }
