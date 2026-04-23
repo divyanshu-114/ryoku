@@ -13,12 +13,32 @@ import Pusher from "pusher";
 import PusherClient from "pusher-js";
 
 // ── Server-side Pusher instance ──
-export const pusherServer = new Pusher({
-    appId: process.env.PUSHER_APP_ID || "",
-    key: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
-    secret: process.env.PUSHER_SECRET || "",
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "us2",
-    useTLS: true,
+// Lazy singleton: created on first use so missing env vars don't crash Next.js build.
+let _pusherServer: Pusher | null = null;
+
+function getPusherServer(): Pusher {
+    if (_pusherServer) return _pusherServer;
+
+    const appId = process.env.PUSHER_APP_ID;
+    const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const secret = process.env.PUSHER_SECRET;
+    const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "us2";
+
+    if (!appId || !key || !secret) {
+        throw new Error(
+            "[pusher] Missing required env vars: PUSHER_APP_ID, NEXT_PUBLIC_PUSHER_KEY, or PUSHER_SECRET"
+        );
+    }
+
+    _pusherServer = new Pusher({ appId, key, secret, cluster, useTLS: true });
+    return _pusherServer;
+}
+
+// Export as a proxy so existing code using `pusherServer.trigger(...)` keeps working
+export const pusherServer = new Proxy({} as Pusher, {
+    get(_target, prop, receiver) {
+        return Reflect.get(getPusherServer(), prop, receiver);
+    },
 });
 
 // ── Client-side singleton ──
@@ -55,7 +75,7 @@ export const PUSHER_EVENTS = {
 // ── Helper: trigger a message to a conversation channel ──
 export async function triggerConversationMessage(
     conversationId: string,
-    message: { id?: number | string; role: string; content: string; sender?: string }
+    message: { id?: number | string; role: string; content: string; sender?: string; sentiment?: string }
 ) {
     await pusherServer.trigger(
         `private-conversation-${conversationId}`,

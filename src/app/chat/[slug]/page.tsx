@@ -90,9 +90,9 @@ export default function ChatPage() {
         const content = typeof msg.content === "string"
             ? msg.content
             : Array.isArray(msg.content)
-                ? msg.content.filter((part) => part?.type === "text").map((part) => part.text || "").join("")
+                ? msg.content.filter((part: { type?: string }) => part?.type === "text").map((part: { text?: string }) => part.text || "").join("")
                 : Array.isArray(msg.parts)
-                    ? msg.parts.map((part) => part.text || "").join("")
+                    ? msg.parts.map((part: { text?: string }) => part.text || "").join("")
                     : "";
 
         const id = msg.id ?? `sdk-${index}-${msg.role}-${Math.random().toString(36).slice(2, 8)}`;

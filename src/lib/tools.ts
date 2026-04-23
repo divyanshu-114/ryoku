@@ -27,18 +27,36 @@ export function createLookupOrderTool(businessId: string) {
         }),
         // @ts-expect-error Zod type mismatch with AI SDK
         execute: async ({ orderId, email }: { orderId?: string; email?: string }) => {
-            const conditions = [];
-            if (orderId) conditions.push(`order_id = '${orderId}'`);
-            if (email) conditions.push(`customer_email = '${email}'`);
-            if (conditions.length === 0) return { error: "Need order ID or email" };
+            if (!orderId && !email) return { error: "Need order ID or email" };
 
-            const result = await sql`
-                SELECT order_id, status, tracking_number, items, total_amount, customer_name
-                FROM orders
-                WHERE business_id = ${businessId}
-                AND ${sql.unsafe(conditions.join(" AND "))}
-                LIMIT 1
-            `;
+            // Use parameterised queries to prevent SQL injection
+            let result;
+            if (orderId && email) {
+                result = await sql`
+                    SELECT order_id, status, tracking_number, items, total_amount, customer_name
+                    FROM orders
+                    WHERE business_id = ${businessId}
+                    AND order_id = ${orderId}
+                    AND customer_email = ${email}
+                    LIMIT 1
+                `;
+            } else if (orderId) {
+                result = await sql`
+                    SELECT order_id, status, tracking_number, items, total_amount, customer_name
+                    FROM orders
+                    WHERE business_id = ${businessId}
+                    AND order_id = ${orderId}
+                    LIMIT 1
+                `;
+            } else {
+                result = await sql`
+                    SELECT order_id, status, tracking_number, items, total_amount, customer_name
+                    FROM orders
+                    WHERE business_id = ${businessId}
+                    AND customer_email = ${email}
+                    LIMIT 1
+                `;
+            }
             return result[0] || { message: "Order not found" };
         },
     });

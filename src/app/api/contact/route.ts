@@ -3,6 +3,16 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+/** Escape HTML entities to prevent XSS in email templates. */
+function escapeHtml(str: unknown): string {
+    return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -15,20 +25,27 @@ export async function POST(req: Request) {
       );
     }
 
+    const safeEmail = escapeHtml(email);
+    const safePlan = escapeHtml(plan);
+    const safeType = escapeHtml(businessType);
+    const safeCode = escapeHtml(countryCode);
+    const safePhone = escapeHtml(phone);
+    const safeMessage = escapeHtml(message);
+
     const { data, error } = await resend.emails.send({
       from: `Ryoku <${process.env.RESEND_EMAIL || "onboarding@resend.dev"}>`,
       to: [process.env.SUPPORT_EMAIL || "trishitofficial@gmail.com"],
-      subject: `Ryoku ${plan} Plan Enquiry — ${businessType}`,
+      subject: `Ryoku ${safePlan} Plan Enquiry — ${safeType}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
           <h2 style="color: #ea580c; border-bottom: 2px solid #ea580c; padding-bottom: 10px;">New Plan Enquiry</h2>
-          <p><strong>Plan:</strong> ${plan}</p>
-          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          <p><strong>Business Type:</strong> ${businessType}</p>
-          <p><strong>Contact Number:</strong> ${countryCode} ${phone}</p>
+          <p><strong>Plan:</strong> ${safePlan}</p>
+          <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+          <p><strong>Business Type:</strong> ${safeType}</p>
+          <p><strong>Contact Number:</strong> ${safeCode} ${safePhone}</p>
           <div style="margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
             <p style="margin-top: 0; font-weight: bold;">Message:</p>
-            <p style="white-space: pre-wrap; margin-bottom: 0;">${message}</p>
+            <p style="white-space: pre-wrap; margin-bottom: 0;">${safeMessage}</p>
           </div>
           <p style="margin-top: 30px; font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
             Sent via Ryoku Platform Contact Form

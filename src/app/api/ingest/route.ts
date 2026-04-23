@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { businesses, documents } from "@/lib/db/schema";
 import { generateEmbeddings } from "@/lib/ai-provider";
 import { eq } from "drizzle-orm";
-import { PDFParse } from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 
 export const maxDuration = 60;
@@ -170,9 +171,7 @@ export async function POST(req: Request) {
 
             let fileText = "";
             if (name.endsWith(".pdf")) {
-                const parser = new PDFParse({ data: buffer });
-                const parsed = await parser.getText();
-                await parser.destroy();
+                const parsed = await pdfParse(buffer);
                 fileText = parsed.text;
             } else if (name.endsWith(".docx") || name.endsWith(".doc")) {
                 const result = await mammoth.extractRawText({ buffer });

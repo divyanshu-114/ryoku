@@ -29,6 +29,24 @@ export async function POST(req: Request) {
         // Normalise URL
         const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
 
+        // SSRF protection: block private/internal IPs
+        const hostname = parsed.hostname.toLowerCase();
+        if (
+            hostname === "localhost" ||
+            /^127\./.test(hostname) ||
+            /^192\.168\./.test(hostname) ||
+            /^10\./.test(hostname) ||
+            /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+            /^169\.254\./.test(hostname) ||
+            hostname.endsWith(".local") ||
+            hostname === "0.0.0.0"
+        ) {
+            return NextResponse.json(
+                { error: "Cannot fetch private or internal URLs" },
+                { status: 400 }
+            );
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 

@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { businesses } from "@/lib/db/schema";
 import { eq, and, ne } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+    const session = await auth();
     const slug = req.nextUrl.searchParams.get("slug");
-    const userId = req.nextUrl.searchParams.get("userId");
+    const userId = session?.user?.id;
 
     if (!slug) {
         return NextResponse.json({ available: false });
