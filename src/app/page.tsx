@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { ArrowUpRight, ArrowRight, ShieldCheck, Zap, Globe, MessageSquare, BarChart3, RefreshCcw, Box } from "lucide-react";
 import { ContactDialog } from "@/components/ContactDialog";
 
@@ -38,8 +38,7 @@ const AmbientBlobs = () => (
   </div>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const fadeUp: any = {
+const fadeUp: Variants = {
   initial: { opacity: 0, y: 30 },
   animate: {
     opacity: 1,
@@ -48,8 +47,7 @@ const fadeUp: any = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stagger: any = {
+const stagger: Variants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { staggerChildren: 0.15 } },
 };
@@ -57,13 +55,13 @@ const stagger: any = {
 const AmbientAgentActivity = () => {
   const activities = [
     { id: 1, type: "msg", role: "user", text: "How do I return my order #4209?", delay: 0, x: "10%", y: "15%", scale: 0.9 },
-    { id: 2, type: "action", label: "Searching Knowledge Base", icon: <Globe className="w-3 h-3" />, delay: 2, x: "70%", y: "10%", scale: 0.85 },
+    { id: 2, type: "action", label: "Searching Knowledge Base", icon: <Globe className="w-3 h-3" />, delay: 2, x: "70%", y: "10%", scale: 0.85, driftX: -28 },
     { id: 3, type: "msg", role: "agent", text: "I can help with that! Looking up your order...", delay: 4, x: "15%", y: "40%", scale: 1 },
-    { id: 4, type: "action", label: "Connecting to Shopify API", icon: <Zap className="w-3 h-3" />, delay: 6, x: "80%", y: "35%", scale: 0.8 },
-    { id: 5, type: "msg", role: "user", text: "Can I get a refund to my original card?", delay: 8, x: "12%", y: "65%", scale: 0.9 },
-    { id: 6, type: "action", label: "Processing Refund Request", icon: <RefreshCcw className="w-3 h-3" />, delay: 10, x: "75%", y: "70%", scale: 0.95 },
-    { id: 7, type: "msg", role: "agent", text: "Refund initiated! You'll see it in 3-5 days.", delay: 12, x: "20%", y: "85%", scale: 1.05 },
-    { id: 8, type: "action", label: "Handoff to Human Agent", icon: <MessageSquare className="w-3 h-3" />, delay: 14, x: "85%", y: "60%", scale: 0.85 },
+    { id: 4, type: "action", label: "Connecting to Shopify API", icon: <Zap className="w-3 h-3" />, delay: 6, x: "80%", y: "35%", scale: 0.8, driftX: 34 },
+    { id: 5, type: "msg", role: "user", text: "Can I get a refund to my original card?", delay: 8, x: "12%", y: "65%", scale: 0.9, driftX: -12 },
+    { id: 6, type: "action", label: "Processing Refund Request", icon: <RefreshCcw className="w-3 h-3" />, delay: 10, x: "75%", y: "70%", scale: 0.95, driftX: 22 },
+    { id: 7, type: "msg", role: "agent", text: "Refund initiated! You'll see it in 3-5 days.", delay: 12, x: "20%", y: "85%", scale: 1.05, driftX: -36 },
+    { id: 8, type: "action", label: "Handoff to Human Agent", icon: <MessageSquare className="w-3 h-3" />, delay: 14, x: "85%", y: "60%", scale: 0.85, driftX: 18 },
   ];
 
   return (
@@ -76,7 +74,7 @@ const AmbientAgentActivity = () => {
             opacity: [0, 1, 1, 0],
             scale: act.scale,
             y: [0, -80],
-            x: [0, (Math.random() - 0.5) * 80],
+            x: [0, act.driftX ?? 24],
           }}
           transition={{
             duration: 12,
@@ -124,7 +122,6 @@ const AmbientAgentActivity = () => {
 
 export default function LandingPage() {
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
 
   useEffect(() => {

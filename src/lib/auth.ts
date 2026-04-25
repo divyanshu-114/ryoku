@@ -4,6 +4,14 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
 import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema";
 
+function requireEnv(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+    return value;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: DrizzleAdapter(db, {
         usersTable: users,
@@ -13,8 +21,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     providers: [
         Google({
-            clientId: process.env.AUTH_GOOGLE_ID!,
-            clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+            clientId: requireEnv("AUTH_GOOGLE_ID"),
+            clientSecret: requireEnv("AUTH_GOOGLE_SECRET"),
         }),
     ],
     pages: {

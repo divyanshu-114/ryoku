@@ -4,6 +4,10 @@ import { conversations, businesses, analyticsEvents } from "@/lib/db/schema";
 import { triggerHandoff } from "@/lib/pusher-server";
 import { eq } from "drizzle-orm";
 
+function getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : "Failed to escalate conversation";
+}
+
 export async function POST(req: Request) {
     try {
         const { conversationId, slug, reason, email, phone } = await req.json();
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
         await triggerHandoff(business.id, conversationId, reason || "User requested agent via UI button");
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
     }
 }

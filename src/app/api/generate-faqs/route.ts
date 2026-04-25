@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { generateDraftFaqs } from "@/app/api/scrape/route";
+import { generateDraftFaqs } from "@/lib/generate-draft-faqs";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";

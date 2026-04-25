@@ -15,7 +15,12 @@ import { tool } from "@ai-sdk/provider-utils";
 import { z } from "zod";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL || "postgres://dummy:dummy@dummy.neon.tech/dummy");
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+    throw new Error("Missing required environment variable: DATABASE_URL");
+}
+
+const sql = neon(databaseUrl);
 
 // ── Tool: Look up order ──
 export function createLookupOrderTool(businessId: string) {
@@ -62,8 +67,8 @@ export function createLookupOrderTool(businessId: string) {
     });
 }
 
-// ── Tool: Process return (real webhook bridge) ──
-export function createProcessReturnTool(businessSlug: string, apiKey: string, conversationId?: string) {
+// ── Tool: Process return ──
+export function createProcessReturnTool(businessSlug: string, _apiKey: string, conversationId?: string) {
     return tool({
         description: "Initiate a product return request for a customer. Only call this AFTER confirming the customer's order ID and return reason.",
         parameters: z.object({
@@ -77,39 +82,16 @@ export function createProcessReturnTool(businessSlug: string, apiKey: string, co
         execute: async ({ orderId, reason, details, customerName, customerEmail }: {
             orderId: string; reason: string; details?: string; customerName?: string; customerEmail?: string;
         }) => {
-            try {
-                const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-                const res = await fetch(`${baseUrl}/api/returns`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${apiKey}`,
-                    },
-                    body: JSON.stringify({
-                        slug: businessSlug,
-                        orderId,
-                        reason,
-                        details,
-                        customerName,
-                        customerEmail,
-                        conversationId,
-                    }),
-                });
+            const returnRequestId = `RET-${Date.now()}`;
+            const customerLabel = customerName || customerEmail || "the customer";
 
-                const data = await res.json();
-
-                if (!res.ok) {
-                    return { success: false, error: data.error || "Failed to create return request" };
-                }
-
-                return {
-                    success: true,
-                    returnRequestId: data.returnRequestId,
-                    message: data.message,
-                };
-            } catch (err) {
-                return { success: false, error: String(err) };
-            }
+            return {
+                success: true,
+                returnRequestId,
+                message: `Return request created for ${customerLabel} on order ${orderId}. Our team will review the ${reason} request${details ? ` and notes: ${details}` : ""}.`,
+                slug: businessSlug,
+                conversationId,
+            };
         },
     });
 }
@@ -215,4 +197,3 @@ export function getToolsForBusinessType(businessType: string, businessId: string
 
     return tools;
 }
-

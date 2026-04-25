@@ -12,7 +12,6 @@ import {
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
@@ -22,21 +21,18 @@ export default function Navbar() {
   const isDashboard = pathname?.startsWith("/dashboard");
   const isAuth = pathname?.startsWith("/auth");
   const isLanding = pathname === "/";
+  const isVisible = !isLanding || lastScrollY < 100;
 
   // Scroll hide (only on landing)
   useEffect(() => {
-    if (!isLanding) { setIsVisible(true); return; }
+    if (!isLanding) return;
     const handleScroll = () => {
       const y = window.scrollY;
-      setIsVisible(y < lastScrollY || y < 100);
-      setLastScrollY(y);
+      setLastScrollY((previousY) => (y < previousY || y < 100 ? 0 : y));
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY, isLanding]);
-
-  // Close mobile menu on route change
-  useEffect(() => { setMobileOpen(false); setProfileOpen(false); }, [pathname]);
+  }, [isLanding]);
 
   // Hide on chat pages entirely
   if (isChat) return null;

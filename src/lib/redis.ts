@@ -1,9 +1,17 @@
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 
+function requireEnv(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+    return value;
+}
+
 export const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    url: requireEnv("UPSTASH_REDIS_REST_URL"),
+    token: requireEnv("UPSTASH_REDIS_REST_TOKEN"),
 });
 
 // Rate limiter: 30 requests per minute per key

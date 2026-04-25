@@ -305,9 +305,9 @@ export function ContactDialog({ isOpen, onClose, plan = "Free" }: ContactDialogP
             }
 
             setSent(true);
-        } catch (error: any) {
+        } catch (error) {
             console.error("Resend error:", error);
-            showToast(error.message || "Something went wrong. Please try again.", "error");
+            showToast(error instanceof Error ? error.message : "Something went wrong. Please try again.", "error");
         } finally {
             setSending(false);
         }
@@ -372,7 +372,7 @@ export function ContactDialog({ isOpen, onClose, plan = "Free" }: ContactDialogP
                                         {plan === "Enterprise" ? "Contact Sales" : "Get in Touch"}
                                     </h2>
                                     <p className="text-xs text-[var(--text-muted)] mt-1">
-                                        Fill in your details and we'll get back to you within 24 hours.
+                                        Fill in your details and we&apos;ll get back to you within 24 hours.
                                     </p>
                                 </div>
                                 <button

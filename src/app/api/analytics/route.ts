@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { businesses, conversations, analyticsEvents, messages } from "@/lib/db/schema";
-import { eq, and, sql, gte, count, avg } from "drizzle-orm";
+import { eq, and, sql, gte, avg } from "drizzle-orm";
 
 // GET /api/analytics — Dashboard stats for the authenticated user's business
 export async function GET(req: Request) {

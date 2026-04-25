@@ -332,7 +332,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                             reason: z.string().describe("Why the customer needs a human agent"),
                         }),
                         // @ts-expect-error Zod type mismatch with AI SDK
-                        execute: async ({ reason }: { reason?: string }) => {
+                        execute: async () => {
                             // Redirect to UI-based email verification flow
                             return {
                                 escalated: false,

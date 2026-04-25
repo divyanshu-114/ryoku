@@ -1,5 +1,11 @@
 {
   "installCommand": "npm install --include=dev",
   "buildCommand": "npm run build",
-  "devCommand": "npm run dev"
+  "devCommand": "npm run dev",
+  "crons": [
+    {
+      "path": "/api/digest",
+      "schedule": "0 9 * * 1"
+    }
+  ]
 }

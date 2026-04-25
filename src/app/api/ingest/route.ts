@@ -5,11 +5,16 @@ import { businesses, documents } from "@/lib/db/schema";
 import { generateEmbeddings } from "@/lib/ai-provider";
 import { eq } from "drizzle-orm";
 // Polyfill for pdf-parse which expects browser globals
-if (typeof global !== "undefined" && typeof (global as any).DOMMatrix === "undefined") {
-    (global as any).DOMMatrix = class DOMMatrix { };
+const nodeGlobal = globalThis as typeof globalThis & {
+    DOMMatrix?: typeof DOMMatrix;
+    Uint8ClampedArray?: typeof Uint8ClampedArray;
+};
+
+if (typeof nodeGlobal.DOMMatrix === "undefined") {
+    nodeGlobal.DOMMatrix = class DOMMatrix { } as typeof DOMMatrix;
 }
-if (typeof global !== "undefined" && typeof (global as any).Uint8ClampedArray === "undefined") {
-    (global as any).Uint8ClampedArray = Uint8ClampedArray;
+if (typeof nodeGlobal.Uint8ClampedArray === "undefined") {
+    nodeGlobal.Uint8ClampedArray = Uint8ClampedArray;
 }
 
 import mammoth from "mammoth";
@@ -61,8 +66,7 @@ export async function POST(req: Request) {
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let config: Record<string, any>;
+    let config: Record<string, unknown>;
     try {
         config = JSON.parse(configRaw);
     } catch {

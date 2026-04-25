@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,11 +12,9 @@ import {
     ThumbsDown,
     ArrowDown,
     RefreshCcw,
-    Zap,
     Heart,
     Headphones,
     X,
-    Mail,
     CheckCircle2,
     Shield,
 } from "lucide-react";
@@ -87,11 +85,20 @@ export default function ChatPage() {
         createdAt: string;
         sender?: string;
     };
+    type SdkMessagePart = { type?: string; text?: string };
+    type SdkMessage = {
+        id?: string;
+        role?: string;
+        content?: string | SdkMessagePart[];
+        parts?: SdkMessagePart[];
+        createdAt?: Date | string;
+        sender?: string;
+    };
 
     // Track stable timestamps for messages that lack them (e.g. optimistic SDK messages)
     const messageTimestamps = useRef<Record<string, string>>({});
 
-    const normalizeSdkMessage = (msg: any, index: number): ChatMessage => {
+    const normalizeSdkMessage = useCallback((msg: SdkMessage, index: number): ChatMessage => {
         const content = typeof msg.content === "string"
             ? msg.content
             : Array.isArray(msg.content)
@@ -119,7 +126,7 @@ export default function ChatPage() {
             createdAt: messageTimestamps.current[id],
             sender: msg.sender,
         };
-    };
+    }, []);
 
     const combinedMessages = useMemo(() => {
         const normalizedHistory = messages.map(normalizeSdkMessage);
@@ -145,7 +152,7 @@ export default function ChatPage() {
             if (aTime === bTime) return a.id.localeCompare(b.id);
             return aTime - bTime;
         });
-    }, [messages, realTimeMessages]);
+    }, [messages, realTimeMessages, normalizeSdkMessage]);
 
     // Contact form state
     const [contactSubmitted, setContactSubmitted] = useState(false);
@@ -284,8 +291,8 @@ export default function ChatPage() {
             await handleEscalate(emailInput, phoneInput);
             setContactSubmitted(true);
             setShowContactModal(false);
-        } catch (err: any) {
-            setContactError(err.message || "Failed to submit request.");
+        } catch (err) {
+            setContactError(err instanceof Error ? err.message : "Failed to submit request.");
         } finally {
             setContactLoading(false);
         }

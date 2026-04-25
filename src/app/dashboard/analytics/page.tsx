@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
         if (status === "unauthenticated") router.push("/auth/login");
     }, [status, router]);
 
-    const fetchAnalytics = async (isRefresh = false) => {
+    const fetchAnalytics = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true); else setLoading(true);
         try {
             const res = await fetch(`/api/analytics?period=${period}`);
@@ -76,15 +76,15 @@ export default function AnalyticsPage() {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, [period]);
 
-    useEffect(() => { fetchAnalytics(); }, [period]);
+    useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
 
     // Auto-refresh every 60s
     useEffect(() => {
         const interval = setInterval(() => fetchAnalytics(true), 60000);
         return () => clearInterval(interval);
-    }, [period]);
+    }, [fetchAnalytics]);
 
     const handleExport = async (format: string) => {
         try {

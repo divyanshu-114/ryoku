@@ -21,6 +21,10 @@ for (const line of envContent.split("\n")) {
 
 const sql = neon(process.env.DATABASE_URL!);
 
+function getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+}
+
 async function migrate() {
     console.log("🔄 Running full schema migration...\n");
 
@@ -32,7 +36,7 @@ async function migrate() {
     ];
     for (const { col, stmt } of convoAlters) {
         try { await stmt; console.log(`  ✓ conversations.${col}`); }
-        catch (e: any) { console.error(`  ✕ conversations.${col}:`, e.message); }
+        catch (e) { console.error(`  ✕ conversations.${col}:`, getErrorMessage(e)); }
     }
 
     // 2. analytics_events table
@@ -49,7 +53,7 @@ async function migrate() {
         await sql`CREATE INDEX IF NOT EXISTS idx_analytics_business ON analytics_events(business_id, event)`;
         await sql`CREATE INDEX IF NOT EXISTS idx_analytics_created ON analytics_events(business_id, created_at)`;
         console.log("  ✓ analytics_events table");
-    } catch (e: any) { console.error("  ✕ analytics_events:", e.message); }
+    } catch (e) { console.error("  ✕ analytics_events:", getErrorMessage(e)); }
 
     // 3. knowledge_gaps table
     try {
@@ -65,7 +69,7 @@ async function migrate() {
         )`;
         await sql`CREATE INDEX IF NOT EXISTS idx_knowledge_gaps_business ON knowledge_gaps(business_id, resolved)`;
         console.log("  ✓ knowledge_gaps table");
-    } catch (e: any) { console.error("  ✕ knowledge_gaps:", e.message); }
+    } catch (e) { console.error("  ✕ knowledge_gaps:", getErrorMessage(e)); }
 
     // 4. agents table
     try {
@@ -81,7 +85,7 @@ async function migrate() {
         )`;
         await sql`CREATE INDEX IF NOT EXISTS idx_agents_business ON agents(business_id, status)`;
         console.log("  ✓ agents table");
-    } catch (e: any) { console.error("  ✕ agents:", e.message); }
+    } catch (e) { console.error("  ✕ agents:", getErrorMessage(e)); }
 
     // 5. canned_responses table
     try {
@@ -96,7 +100,7 @@ async function migrate() {
         )`;
         await sql`CREATE INDEX IF NOT EXISTS idx_canned_business ON canned_responses(business_id)`;
         console.log("  ✓ canned_responses table");
-    } catch (e: any) { console.error("  ✕ canned_responses:", e.message); }
+    } catch (e) { console.error("  ✕ canned_responses:", getErrorMessage(e)); }
 
     // 6. widget_configs table
     try {
@@ -113,7 +117,7 @@ async function migrate() {
             created_at TIMESTAMP DEFAULT NOW()
         )`;
         console.log("  ✓ widget_configs table");
-    } catch (e: any) { console.error("  ✕ widget_configs:", e.message); }
+    } catch (e) { console.error("  ✕ widget_configs:", getErrorMessage(e)); }
 
     // 7. push_subscriptions table
     try {
@@ -127,11 +131,12 @@ async function migrate() {
         )`;
         await sql`CREATE INDEX IF NOT EXISTS push_sub_user_idx ON push_subscriptions(user_id)`;
         console.log("  ✓ push_subscriptions table");
-    } catch (e: any) { console.error("  ✕ push_subscriptions:", e.message); }
+    } catch (e) { console.error("  ✕ push_subscriptions:", getErrorMessage(e)); }
 
     // Verify all tables
     const tables = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name`;
-    console.log("\n📋 All tables:", tables.map(t => t.table_name).join(", "));
+    const tableRows = tables as Array<{ table_name: string }>;
+    console.log("\n📋 All tables:", tableRows.map((t) => t.table_name).join(", "));
     console.log("\n✅ Migration complete.");
 }
 

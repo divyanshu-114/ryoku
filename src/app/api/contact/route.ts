@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+const resend = new Resend(requireEnv("RESEND_API_KEY"));
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Failed to send enquiry";
+}
 
 /** Escape HTML entities to prevent XSS in email templates. */
 function escapeHtml(str: unknown): string {
@@ -34,7 +46,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await resend.emails.send({
       from: `Ryoku <${process.env.RESEND_EMAIL || "onboarding@resend.dev"}>`,
-      to: [process.env.SUPPORT_EMAIL || "trishitofficial@gmail.com"],
+      to: [requireEnv("SUPPORT_EMAIL")],
       subject: `Ryoku ${safePlan} Plan Enquiry — ${safeType}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
@@ -59,7 +71,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, data });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     ArrowLeft, Loader2, Send, User, Bot, Circle, Clock,
     AlertTriangle, Zap, MessageSquare, ChevronRight,
-    CheckCircle2, Plus, X, Volume2, Mail, Shield, Phone,
+    CheckCircle2, Plus, X, Mail, Shield, Phone,
 } from "lucide-react";
 import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher-client";
 import { showToast } from "@/lib/toast";

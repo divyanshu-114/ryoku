@@ -28,7 +28,6 @@ import {
     BarChart3,
 
 
-    CalendarDays,
     Globe,
     TrendingUp,
 
@@ -221,7 +220,6 @@ export default function DashboardPage() {
     const [generatingKey, setGeneratingKey] = useState(false);
     const [newlyCreatedKey, setNewlyCreatedKey] = useState("");
     const [snippetTab, setSnippetTab] = useState<"curl" | "react" | "js">("curl");
-    const [showPreview, setShowPreview] = useState(false);
     const [copiedSnippet, setCopiedSnippet] = useState(false);
     const [botHealth, setBotHealth] = useState<BotHealthSummary | null>(null);
     const [quickLaunchMode, setQuickLaunchMode] = useState(false);
