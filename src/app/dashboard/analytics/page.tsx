@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                     {[
                         { label: "Conversations", value: stats?.totalConversations || 0, icon: MessageSquare, color: "var(--accent)" },
                         { label: "Messages", value: stats?.totalMessages || 0, icon: Activity, color: "var(--accent-light)" },
@@ -211,10 +211,10 @@ export default function AnalyticsPage() {
                                     
                                     return (
                                         <div key={d.date || i} className="flex-1 flex flex-col items-center justify-end gap-1 group relative h-full">
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)] text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-sm">
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)] text-[12px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-sm">
                                                 {countVal} msgs
                                             </div>
-                                            <span className="text-[10px] text-[var(--text-muted)] font-medium z-10">{countVal}</span>
+                                            <span className="text-[12px] text-[var(--text-muted)] font-medium z-10">{countVal}</span>
                                             
                                             {/* Bar Track Wrapper */}
                                             <div className="w-full max-w-[32px] flex-1 flex flex-col justify-end">
@@ -230,7 +230,7 @@ export default function AnalyticsPage() {
 
                                             {/* Label Wrapper to prevent overlap */}
                                             <div className="h-6 relative w-full flex justify-center mt-1">
-                                                <span className="absolute top-0 text-[9px] text-[var(--text-muted)] -rotate-45 whitespace-nowrap text-right pr-1">
+                                                <span className="absolute top-0 text-[12px] text-[var(--text-muted)] -rotate-45 whitespace-nowrap text-right pr-1">
                                                     {label}
                                                 </span>
                                             </div>

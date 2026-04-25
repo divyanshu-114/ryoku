@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { businesses, agents } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { pusherServer, PUSHER_EVENTS } from "@/lib/pusher";
+import { pusherServer, PUSHER_EVENTS } from "@/lib/pusher-server";
 
 // GET /api/agent — Get current user's agent profile
 export async function GET() {

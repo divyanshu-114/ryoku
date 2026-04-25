@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { conversations, businesses, analyticsEvents } from "@/lib/db/schema";
-import { triggerHandoff } from "@/lib/pusher";
+import { triggerHandoff } from "@/lib/pusher-server";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {

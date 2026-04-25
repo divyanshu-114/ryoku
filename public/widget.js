@@ -10,6 +10,8 @@
  *   data-theme      — "dark", "light", or "auto"
  *   data-color      — Accent color hex
  *   data-open       — "true" to start open
+ *   data-width     — Widget width (default: 400px)
+ *   data-height    — Widget height (default: 600px)
  */
 (function () {
     "use strict";
@@ -32,17 +34,17 @@
     let container, bubble, iframe, closeBtn;
 
     // Styles
-    const BUBBLE_SIZE = 60;
-    const WIDGET_WIDTH = 400;
-    const WIDGET_HEIGHT = 600;
+    const BUBBLE_SIZE = 56;
+    const WIDGET_WIDTH = Math.min(380, parseInt(script?.getAttribute("data-width")) || 380);
+    const WIDGET_HEIGHT = Math.min(520, parseInt(script?.getAttribute("data-height")) || 520);
 
     function injectStyles() {
         const style = document.createElement("style");
         style.textContent = `
             #ryoku-widget-bubble {
                 position: fixed;
-                ${position === "bottom-left" ? "left" : "right"}: 20px;
-                bottom: 20px;
+                ${position === "bottom-left" ? "left" : "right"}: 16px;
+                bottom: 16px;
                 width: ${BUBBLE_SIZE}px;
                 height: ${BUBBLE_SIZE}px;
                 border-radius: 50%;
@@ -52,34 +54,36 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 0 ${accentColor}40;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 0 0 0 ${accentColor}40;
                 transition: transform 0.2s ease, box-shadow 0.2s ease;
                 border: none;
                 outline: none;
             }
             #ryoku-widget-bubble:hover {
-                transform: scale(1.1);
-                box-shadow: 0 6px 32px rgba(0,0,0,0.4), 0 0 0 8px ${accentColor}20;
+                transform: scale(1.08);
+                box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 6px ${accentColor}20;
             }
             #ryoku-widget-bubble svg {
-                width: 28px;
-                height: 28px;
+                width: 24px;
+                height: 24px;
                 fill: white;
             }
             #ryoku-widget-container {
                 position: fixed;
-                ${position === "bottom-left" ? "left" : "right"}: 20px;
-                bottom: 90px;
+                ${position === "bottom-left" ? "left" : "right"}: 16px;
+                bottom: calc(16px + ${BUBBLE_SIZE}px + 12px);
                 width: ${WIDGET_WIDTH}px;
+                max-width: calc(100vw - 32px);
                 height: ${WIDGET_HEIGHT}px;
+                max-height: calc(100dvh - 100px);
                 z-index: 999999;
-                border-radius: 16px;
+                border-radius: 14px;
                 overflow: hidden;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-                transform: ${isOpen ? "scale(1) translateY(0)" : "scale(0.9) translateY(20px)"};
+                box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+                transform: ${isOpen ? "scale(1) translateY(0)" : "scale(0.92) translateY(16px)"};
                 opacity: ${isOpen ? "1" : "0"};
                 pointer-events: ${isOpen ? "auto" : "none"};
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+                transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
             }
             #ryoku-widget-container.open {
                 transform: scale(1) translateY(0);
@@ -87,7 +91,7 @@
                 pointer-events: auto;
             }
             #ryoku-widget-container.closed {
-                transform: scale(0.9) translateY(20px);
+                transform: scale(0.92) translateY(16px);
                 opacity: 0;
                 pointer-events: none;
             }
@@ -99,12 +103,12 @@
             }
             #ryoku-widget-close {
                 position: absolute;
-                top: 10px;
-                right: 10px;
+                top: 8px;
+                right: 8px;
                 width: 28px;
                 height: 28px;
                 border-radius: 50%;
-                background: rgba(0,0,0,0.4);
+                background: rgba(0,0,0,0.35);
                 border: none;
                 cursor: pointer;
                 z-index: 10;
@@ -112,17 +116,48 @@
                 align-items: center;
                 justify-content: center;
                 color: white;
-                font-size: 14px;
+                font-size: 13px;
+                font-weight: 500;
                 transition: background 0.2s;
             }
-            #ryoku-widget-close:hover { background: rgba(0,0,0,0.6); }
-            @media (max-width: 480px) {
+            #ryoku-widget-close:hover { background: rgba(0,0,0,0.55); }
+            @media (max-width: 420px) {
                 #ryoku-widget-container {
-                    width: calc(100vw - 20px);
-                    height: calc(100vh - 120px);
-                    ${position === "bottom-left" ? "left" : "right"}: 10px;
+                    width: calc(100vw - 24px);
+                    height: calc(100dvh - 90px);
+                    left: 12px;
+                    right: 12px;
                     bottom: 80px;
                     border-radius: 12px;
+                }
+                #ryoku-widget-bubble {
+                    width: 52px;
+                    height: 52px;
+                    left: 12px !important;
+                    right: 12px !important;
+                    bottom: 12px;
+                }
+                #ryoku-widget-bubble svg {
+                    width: 22px;
+                    height: 22px;
+                }
+            }
+            @media (max-height: 700px) {
+                #ryoku-widget-container {
+                    height: calc(100dvh - 80px);
+                }
+            }
+            @supports (padding-bottom: env(safe-area-inset-bottom)) {
+                #ryoku-widget-bubble {
+                    bottom: calc(16px + env(safe-area-inset-bottom));
+                }
+                #ryoku-widget-container {
+                    bottom: calc(16px + ${BUBBLE_SIZE}px + 12px + env(safe-area-inset-bottom));
+                }
+                @media (max-width: 420px) {
+                    #ryoku-widget-container {
+                        bottom: calc(70px + env(safe-area-inset-bottom));
+                    }
                 }
             }
         `;

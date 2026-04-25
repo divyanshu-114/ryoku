@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { ArrowUpRight, ArrowRight, ShieldCheck, Zap, Globe, MessageSquare, BarChart3, RefreshCcw, Box } from "lucide-react";
+import { ContactDialog } from "@/components/ContactDialog";
 
 // ── Components ──
 
@@ -32,42 +33,10 @@ const LetterReveal = ({ text, className, style, delay = 0 }: { text: string, cla
 
 const AmbientBlobs = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    <div className="absolute top-[10%] -left-[5%] w-[40vw] h-[40vw] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.08)_0%,transparent_70%)] animate-blob" />
-    <div className="absolute -bottom-[10%] -right-[5%] w-[35vw] h-[35vw] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.05)_0%,transparent_70%)] animate-blob" style={{ animationDelay: "-5s" }} />
-    <div className="absolute top-[40%] left-[20%] w-[20vw] h-[20vw] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.03)_0%,transparent_70%)] animate-blob" style={{ animationDelay: "-12s" }} />
+    <div className="absolute -top-[20%] -left-[10%] w-[30vw] h-[30vw] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.05)_0%,transparent_70%)] animate-blob" />
+    <div className="absolute -bottom-[20%] -right-[10%] w-[30vw] h-[30vw] rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.05)_0%,transparent_70%)] animate-blob" style={{ animationDelay: "-5s" }} />
   </div>
 );
-
-const GlassTorus = () => {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const moveX = (clientX - window.innerWidth / 2) / 25;
-      const moveY = (clientY - window.innerHeight / 2) / 25;
-      mouseX.set(moveX);
-      mouseY.set(moveY);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
-
-  const springX = useSpring(mouseX, { stiffness: 100, damping: 30 });
-  const springY = useSpring(mouseY, { stiffness: 100, damping: 30 });
-
-  return (
-    <motion.div
-      style={{ x: springX, y: springY, rotateX: springY, rotateY: springX }}
-      className="hidden lg:block absolute -top-20 -right-20 w-80 h-80 pointer-events-none perspective-container preserve-3d"
-    >
-      <div className="absolute inset-0 rounded-full border-[30px] border-[var(--accent)] opacity-[0.03] blur-xl animate-spin-slow" />
-      <div className="absolute inset-4 rounded-full border-[1px] border-white/20 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md shadow-2xl animate-orbit" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-[var(--accent)] blur-[80px] opacity-20" />
-    </motion.div>
-  );
-};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fadeUp: any = {
@@ -85,8 +54,78 @@ const stagger: any = {
   animate: { opacity: 1, transition: { staggerChildren: 0.15 } },
 };
 
+const AmbientAgentActivity = () => {
+  const activities = [
+    { id: 1, type: "msg", role: "user", text: "How do I return my order #4209?", delay: 0, x: "10%", y: "15%", scale: 0.9 },
+    { id: 2, type: "action", label: "Searching Knowledge Base", icon: <Globe className="w-3 h-3" />, delay: 2, x: "70%", y: "10%", scale: 0.85 },
+    { id: 3, type: "msg", role: "agent", text: "I can help with that! Looking up your order...", delay: 4, x: "15%", y: "40%", scale: 1 },
+    { id: 4, type: "action", label: "Connecting to Shopify API", icon: <Zap className="w-3 h-3" />, delay: 6, x: "80%", y: "35%", scale: 0.8 },
+    { id: 5, type: "msg", role: "user", text: "Can I get a refund to my original card?", delay: 8, x: "12%", y: "65%", scale: 0.9 },
+    { id: 6, type: "action", label: "Processing Refund Request", icon: <RefreshCcw className="w-3 h-3" />, delay: 10, x: "75%", y: "70%", scale: 0.95 },
+    { id: 7, type: "msg", role: "agent", text: "Refund initiated! You'll see it in 3-5 days.", delay: 12, x: "20%", y: "85%", scale: 1.05 },
+    { id: 8, type: "action", label: "Handoff to Human Agent", icon: <MessageSquare className="w-3 h-3" />, delay: 14, x: "85%", y: "60%", scale: 0.85 },
+  ];
+
+  return (
+    <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+      {activities.map((act) => (
+        <motion.div
+          key={act.id}
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{
+            opacity: [0, 1, 1, 0],
+            scale: act.scale,
+            y: [0, -80],
+            x: [0, (Math.random() - 0.5) * 80],
+          }}
+          transition={{
+            duration: 12,
+            delay: act.delay,
+            repeat: Infinity,
+            repeatDelay: 2,
+            ease: "easeInOut",
+          }}
+          style={{ left: act.x, top: act.y }}
+          className="absolute z-0"
+        >
+          {act.type === "msg" ? (
+            <div
+              className={`px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-2xl border ${
+                act.role === "agent"
+                  ? "bg-white/70 text-[var(--text-primary)] border-[var(--accent)]/10"
+                  : "bg-[var(--accent)] text-white border-white/10"
+              } max-w-[240px] opacity-80`}
+            >
+              <p className="text-[10px] md:text-[11px] font-bold leading-relaxed tracking-tight">
+                {act.text}
+              </p>
+              <div className="mt-2 flex items-center gap-1.5 opacity-40">
+                <div className={`w-1 h-1 rounded-full ${act.role === 'agent' ? 'bg-[var(--accent)]' : 'bg-white'}`} />
+                <span className={`text-[8px] uppercase font-black tracking-widest ${act.role === 'agent' ? 'text-[var(--accent)]' : 'text-white'}`}>
+                  {act.role === "agent" ? "Ryoku AI" : "Customer"}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-white/30 border border-[var(--accent)]/5 backdrop-blur-md shadow-xl opacity-60">
+              <div className="w-5 h-5 rounded-full bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)]">
+                {act.icon}
+              </div>
+              <span className="text-[9px] font-bold text-[var(--text-primary)] opacity-60 uppercase tracking-widest">
+                {act.label}
+              </span>
+            </div>
+          )}
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
 export default function LandingPage() {
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showContactDialog, setShowContactDialog] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -102,212 +141,90 @@ export default function LandingPage() {
     <main className="bg-white selection:bg-[var(--accent)] selection:text-white relative">
       <AmbientBlobs />
       {/* ── HERO ── */}
-      <section className="relative w-full min-h-[100dvh] lg:min-h-screen flex flex-col justify-center snap-start pt-32 pb-4 lg:pt-32 lg:pb-0 px-5 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto">
+      <section className="relative w-full min-h-[100dvh] lg:min-h-screen flex flex-col justify-center snap-start py-24 px-5 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto overflow-hidden">
+        {/* Ambient Agent Activity Visual - Outer Background */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+          <AmbientAgentActivity />
+        </div>
+
         <motion.div
           initial="initial"
           animate="animate"
           variants={stagger}
-          className="flex-1 flex flex-col justify-center"
+          className="flex flex-col items-center text-center relative z-10 w-full"
         >
           {/* eyebrow */}
           <motion.p
             variants={fadeUp}
-            className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-8"
+            className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-6"
           >
             Ryoku — One-Click Chatbots
           </motion.p>
 
-          {/* headline: serif + asymmetric */}
-          <motion.div variants={fadeUp} className="max-w-5xl mb-8 lg:mb-12 relative">
+          {/* headline unit */}
+          <motion.div variants={fadeUp} className="max-w-5xl mb-8 relative flex flex-col items-center">
             <h1
               style={{
                 fontFamily: "'Playfair Display', serif",
-                lineHeight: 1.06,
+                lineHeight: 1.05,
                 letterSpacing: "-0.02em",
               }}
-              className="text-[clamp(3rem,8vw,7.5rem)] font-black text-[var(--text-primary)] relative z-10"
+              className="text-[clamp(2.5rem,7vw,5.5rem)] font-black text-[var(--text-primary)] relative z-10"
             >
-              <LetterReveal text="Create Chatbots" delay={0.2} />
+              <LetterReveal text="Chatbots" delay={0.2} />
               <br className="hidden sm:block" />
               <span className="italic text-[var(--accent)]">
-                <LetterReveal text="for Your Business" delay={0.6} />
+                <LetterReveal text="for Your Business" delay={0.5} />
               </span>
               <br className="hidden sm:block" />
               <span
                 style={{
-                  WebkitTextStroke: "2px var(--text-primary)",
+                  WebkitTextStroke: "1.5px var(--text-primary)",
                   color: "transparent",
                 }}
               >
-                <LetterReveal text="at one Click" delay={1.0} />
+                <LetterReveal text="in minutes" delay={0.8} />
               </span>
             </h1>
-
-            <GlassTorus />
           </motion.div>
 
-          {/* two-column: desc + chat preview */}
-          <div className="flex flex-col lg:flex-row items-center lg:items-end justify-between gap-12 lg:gap-8">
-            <motion.div
-              variants={fadeUp}
-              className="w-full lg:w-[45%] pb-0 lg:pb-8"
+          {/* description + CTA unit */}
+          <motion.div variants={fadeUp} className="max-w-2xl flex flex-col items-center">
+            <p
+              className="text-[1.1rem] md:text-[1.25rem] text-[var(--text-secondary)] leading-relaxed mb-10 drop-shadow-sm font-medium"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              <p
-                className="text-[1.1rem] md:text-[1.2rem] text-[var(--text-secondary)] leading-relaxed max-w-md mb-10"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
-                An AI agent trained on your business — answers FAQs, handles
-                returns, hands off to humans. Not a chatbot template. Built for
-                the way real customers actually talk.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/auth/login" className="w-full sm:w-auto">
-                  <button className="group relative w-full inline-flex items-center justify-center gap-3 bg-[var(--text-primary)] text-white px-8 py-4 font-semibold text-sm tracking-wide transition-all hover:bg-[var(--accent)] min-h-[52px]">
-                    Start for free
-                    <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </button>
-                </Link>
-                <Link href="#how-it-works" className="w-full sm:w-auto">
-                  <button className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-all min-h-[52px]">
-                    See how it works
-                  </button>
-                </Link>
-              </div>
+              An AI agent trained on your business — answers FAQs, handles
+              returns, hands off to humans. Built for the way real customers actually talk.
+            </p>
 
-              {/* small proof strip */}
-              <div className="mt-10 flex items-center gap-6">
-                <span className="w-8 h-[1px] bg-[var(--border-default)]" />
-                <span className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-[var(--text-muted)]">
-                  Free tier · No card required
-                </span>
-              </div>
-            </motion.div>
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Link href="/auth/login" className="w-full sm:w-auto">
+                <button className="group relative w-full inline-flex items-center justify-center gap-3 bg-[var(--text-primary)] text-white px-10 py-5 font-bold text-sm tracking-widest uppercase transition-all hover:bg-[var(--accent)] shadow-2xl shadow-indigo-500/10 hover:shadow-indigo-500/20 min-h-[60px]">
+                  Start for free
+                  <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </button>
+              </Link>
+              <Link href="#how-it-works" className="w-full sm:w-auto">
+                <button className="w-full inline-flex items-center justify-center gap-2 px-10 py-5 text-sm font-bold tracking-widest uppercase text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-all min-h-[60px] bg-white/50 backdrop-blur-md">
+                  Explore how it works
+                </button>
+              </Link>
+            </div>
 
-            {/* live chat preview screenshot — flush right edge on desktop */}
-            <motion.div
-              variants={fadeUp}
-              className="relative lg:absolute lg:right-0 lg:bottom-0 xl:bottom-0 bg-[#111] overflow-hidden shadow-2xl w-full max-w-[400px] xl:max-w-[480px] lg:max-w-[420px] mx-auto lg:mx-0 shrink-0 h-[400px] sm:h-[450px] lg:h-[550px] xl:h-[600px] flex flex-col group transition-transform duration-700 hover:scale-[1.02] lg:rounded-l-2xl lg:rounded-r-none rounded-2xl"
-              style={{ borderRadius: "16px" }}
-            >
-              {/* fake browser bar */}
-              <div className="flex items-center gap-2.5 px-6 py-4 border-b border-white/10 shrink-0 bg-white/5 backdrop-blur-md">
-                <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                <div className="w-3 h-3 rounded-full bg-green-500/60" />
-                <span className="ml-3 text-[11px] text-white/30 font-mono tracking-wider">
-                  ryoku.chat / widget
-                </span>
-              </div>
-              {/* chat messages */}
-              <div
-                className="px-6 pt-8 pb-8 space-y-6 bg-white/[0.02] flex-1 overflow-y-auto"
-                style={{ scrollbarWidth: "none" }}
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: 0.8, type: "spring", stiffness: 100 }}
-                  className="flex gap-4 items-start"
-                >
-                  <div className="w-9 h-9 shadow-lg rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-glow)] flex items-center justify-center text-[12px] text-white font-bold shrink-0 mt-0.5">
-                    R
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-white/40 mb-1.5 font-medium ml-1">
-                      Ryoku Agent
-                    </p>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl rounded-tl-sm px-5 py-3.5 text-[0.9rem] text-white/90 max-w-[280px] leading-relaxed shadow-sm">
-                      Hey! I&apos;m your TechStore assistant. Need help with a
-                      return, policy, or question?
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, x: 10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: 1.8, type: "spring", stiffness: 100 }}
-                  className="flex justify-end"
-                >
-                  <div className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-light)] rounded-2xl rounded-tr-sm px-5 py-3.5 text-[0.9rem] text-white max-w-[260px] shadow-lg shadow-[var(--accent)]/20">
-                    I want to return order #4521. It&apos;s defective.
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: 3.2, type: "spring", stiffness: 100 }}
-                  className="flex gap-4 items-start"
-                >
-                  <div className="w-9 h-9 shadow-lg rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-glow)] flex items-center justify-center text-[12px] text-white font-bold shrink-0 mt-0.5">
-                    R
-                  </div>
-                  <div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl rounded-tl-sm px-5 py-3.5 text-[0.9rem] text-white/90 max-w-[280px] leading-relaxed shadow-sm">
-                      Found it — a Wireless Keyboard, Mar 2. I&apos;ve filed a
-                      return request. Your refund will be confirmed by the store
-                      within 24h.
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, x: 10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: 4.8, type: "spring", stiffness: 100 }}
-                  className="flex justify-end"
-                >
-                  <div className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-light)] rounded-2xl rounded-tr-sm px-5 py-3.5 text-[0.9rem] text-white max-w-[260px] shadow-lg shadow-[var(--accent)]/20">
-                    I would like to speak to a human agent, please
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: 6.2, type: "spring", stiffness: 100 }}
-                  className="flex gap-4 items-start"
-                >
-                  <div className="w-9 h-9 shadow-lg rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-glow)] flex items-center justify-center text-[12px] text-white font-bold shrink-0 mt-0.5">
-                    R
-                  </div>
-                  <div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl rounded-tl-sm px-5 py-3.5 text-[0.9rem] text-white/90 max-w-[280px] leading-relaxed shadow-sm">
-                      Please wait for some time for a real agent to join.
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* typing indicator */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 7.5 }}
-                  className="flex gap-4 items-start"
-                >
-                  <div className="w-9 h-9 shadow-lg rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-glow)] flex items-center justify-center text-[12px] text-white font-bold shrink-0" />
-                  <div className="bg-white/10 backdrop-blur-sm shadow-sm rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-1.5 mt-1">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                </motion.div>
-                <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-[var(--bg-dark)] to-transparent pointer-events-none" />
-              </div>
-            </motion.div>
-          </div>
+            {/* small proof strip */}
+            <div className="mt-12 flex items-center justify-center gap-8 opacity-60">
+              <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[var(--border-default)]" />
+              <span className="text-[10px] sm:text-[11px] font-black tracking-[0.2em] uppercase text-[var(--text-muted)]">
+                Free tier · No card required
+              </span>
+              <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-[var(--border-default)]" />
+            </div>
+          </motion.div>
         </motion.div>
       </section>
+
+
 
       {/* ── MARQUEE STRIP ── */}
       <div className="snap-center border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] overflow-hidden py-4 w-full">
@@ -322,7 +239,7 @@ export default function LandingPage() {
                 "Multi-Language",
                 "Analytics Dashboard",
                 "Custom AI Persona",
-                "Embeddable Widget",
+                "Seamless API",
                 "Privacy-First",
               ].map((item) => (
                 <span
@@ -461,7 +378,7 @@ export default function LandingPage() {
               {
                 n: "3",
                 title: "Go live, handle customers",
-                body: "Share a link or embed the widget. Your agent starts responding to real queries immediately.",
+                body: "Share a link or integrate via API. Your agent starts responding to real queries immediately.",
               },
             ].map((s) => (
               <motion.div
@@ -541,31 +458,31 @@ export default function LandingPage() {
               },
               {
                 label: "Return Processing",
-                note: "Pro+",
+                note: "Enterprise",
                 icon: <Box className="w-5 h-5" />,
                 body: "End-to-end return flows via webhook bridge to your payment system.",
               },
               {
                 label: "Instant Data Ingestion",
-                note: "All plans",
+                note: "Free",
                 icon: <Globe className="w-5 h-5" />,
                 body: "Give us a URL and we'll crawl it instantly to build your agent's knowledge base.",
               },
               {
-                label: "Embeddable Widget",
-                note: "Pro+",
+                label: "Real-time Monitoring",
+                note: "Free",
                 icon: <Zap className="w-5 h-5" />,
-                body: "Drop a <script> tag. No framework required. Fully brandable.",
+                body: "Watch conversations live and jump in whenever your agents need a hand.",
               },
               {
                 label: "Multi-Language",
-                note: "All plans",
+                note: "Free",
                 icon: <Globe className="w-5 h-5" />,
                 body: "Auto-detects language and responds naturally in 50+.",
               },
               {
                 label: "Privacy-First Storage",
-                note: "All plans",
+                note: "Free",
                 icon: <ShieldCheck className="w-5 h-5" />,
                 body: "Row-level isolation. Your data never mixes with others.",
               },
@@ -634,32 +551,33 @@ export default function LandingPage() {
             </motion.h2>
           </div>
 
-          <div className="w-full max-w-lg mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 w-full max-w-4xl">
+            {/* Free Plan */}
             <motion.div
               variants={fadeUp}
               whileHover={{ y: -5, rotateX: 1, rotateY: 1 }}
               style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
-              className="p-10 md:p-12 border bg-[var(--text-primary)] border-[var(--text-primary)] shadow-2xl flex flex-col relative overflow-hidden group w-full"
+              className="p-8 md:p-10 border bg-[var(--text-primary)] border-[var(--text-primary)] shadow-2xl flex flex-col relative overflow-hidden group w-full"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--accent)] opacity-10 blur-3xl pointer-events-none" />
-              
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-8 bg-white/10 text-[var(--accent)]">
+
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-white/10 text-[var(--accent)]">
                 <MessageSquare className="w-6 h-6" />
               </div>
-              
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-4 text-[var(--accent)]">
+
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3 text-[var(--accent)]">
                 Free
               </p>
               <h3
                 style={{ fontFamily: "'Playfair Display', serif" }}
-                className="text-2xl md:text-3xl font-bold mb-4 italic leading-tight text-white"
+                className="text-xl md:text-2xl font-bold mb-3 italic leading-tight text-white"
               >
                 Everything you need
               </h3>
-              
-              <div className="w-full h-[1px] my-8 bg-white/10" />
-              
-              <ul className="space-y-5 mb-12 flex-1 relative z-10">
+
+              <div className="w-full h-[1px] my-6 bg-white/10" />
+
+              <ul className="space-y-4 mb-8 flex-1 relative z-10">
                 {[
                   "FAQ chatbot with knowledge base",
                   "Basic agent handoff",
@@ -667,19 +585,71 @@ export default function LandingPage() {
                   "Unanswered question tracking",
                   "Community support",
                 ].map((f) => (
-                  <li key={f} className="flex items-start gap-4 text-[0.95rem] text-white/80">
+                  <li key={f} className="flex items-start gap-3 text-[0.9rem] text-white/80">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
                     {f}
                   </li>
                 ))}
               </ul>
-              
+
               <Link href="/auth/login" className="mt-auto block">
-                <button className="w-full py-4 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-3 group border bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20 cursor-pointer">
+                <button className="w-full py-3.5 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2 group border bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20 cursor-pointer">
                   Get Started
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </Link>
+            </motion.div>
+
+            {/* Enterprise Plan */}
+            <motion.div
+              variants={fadeUp}
+              whileHover={{ y: -5, rotateX: 1, rotateY: 1 }}
+              style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+              className="p-8 md:p-10 border bg-white border-[var(--border-default)] shadow-xl flex flex-col relative overflow-hidden group w-full hover:border-[var(--accent)]/30 transition-all"
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--accent)] opacity-5 blur-3xl pointer-events-none" />
+
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-[var(--accent-glow)] text-[var(--accent)]">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3 text-[var(--accent)]">
+                Enterprise
+              </p>
+              <h3
+                style={{ fontFamily: "'Playfair Display', serif" }}
+                className="text-xl md:text-2xl font-bold mb-3 italic leading-tight text-[var(--text-primary)]"
+              >
+                Custom solutions
+              </h3>
+
+              <div className="w-full h-[1px] my-6 bg-[var(--border-subtle)]" />
+
+              <ul className="space-y-4 mb-8 flex-1 relative z-10">
+                {[
+                  "Return processing automations",
+                  "Custom AI persona & tone",
+                  "Dedicated onboarding team",
+                  "SLA & priority support",
+                  "Advanced security & compliance",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-[0.9rem] text-[var(--text-secondary)]">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => {
+                  const dialog = document.getElementById("contact-sales-trigger");
+                  if (dialog) dialog.click();
+                }}
+                className="mt-auto w-full py-3.5 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2 group border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)] cursor-pointer"
+              >
+                Contact Sales
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </button>
             </motion.div>
           </div>
         </motion.div>
@@ -767,6 +737,20 @@ export default function LandingPage() {
           </p>
         </div>
       </motion.footer>
+
+      {/* Hidden contact sales trigger */}
+      <button
+        id="contact-sales-trigger"
+        onClick={() => setShowContactDialog(true)}
+        className="hidden"
+        aria-hidden="true"
+      />
+
+      <ContactDialog
+        isOpen={showContactDialog}
+        onClose={() => setShowContactDialog(false)}
+        plan="Enterprise"
+      />
     </main>
   );
 }

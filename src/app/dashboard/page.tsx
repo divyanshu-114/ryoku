@@ -890,7 +890,7 @@ export default function DashboardPage() {
         return (
             <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
                 <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
-                <div className="max-w-4xl mx-auto w-full relative z-10 flex-1 overflow-y-auto pt-20 px-4 pb-10 space-y-8 scroll-smooth">
+                <div className="max-w-6xl mx-auto w-full relative z-10 flex-1 overflow-y-auto pt-20 px-4 pb-10 space-y-8 scroll-smooth">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                         <div>
@@ -945,7 +945,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Stats row */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="p-3 rounded-lg text-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
                                 <p className="text-2xl font-bold text-[var(--text-primary)]">{botHealth?.week.chats ?? "—"}</p>
                                 <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mt-0.5">Chats handled</p>
@@ -964,7 +964,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Navigation Cards */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
                             { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", desc: "Performance & CSAT", free: true },
                             { href: "/dashboard/agent", icon: Headphones, label: "Agent Workspace", desc: "Live chat & handoff", free: true },
@@ -1141,31 +1141,7 @@ const reader = response.body.getReader();
                         </div>
                     </div>
 
-                    {/* Chat Preview */}
-                    <div className="glass-card p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Bot className="w-4 h-4 text-[var(--accent)]" />
-                                <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Live Preview</span>
-                            </div>
-                            <button
-                                onClick={() => setShowPreview(!showPreview)}
-                                className="text-xs font-medium text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer"
-                            >
-                                {showPreview ? "Hide" : "Show Preview"}
-                            </button>
-                        </div>
-                        {showPreview && (
-                            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-subtle)", height: 500 }}>
-                                <iframe
-                                    src={chatLink}
-                                    className="w-full h-full"
-                                    style={{ background: "var(--bg-primary)" }}
-                                    title="Chat Preview"
-                                />
-                            </div>
-                        )}
-                    </div>
+                    {/* Chat Preview removed */}
                 </div>
             </main>
         );

@@ -111,7 +111,7 @@ function BillingContent() {
                             </li>
                             <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
                                 <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
-                                API & widget embed access
+                                Full API access
                             </li>
                             <li className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
                                 <Zap className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
@@ -206,7 +206,7 @@ function BillingContent() {
                                     <td className="text-center text-[var(--accent)]">✓</td>
                                 </tr>
                                 <tr className="border-b border-white/5">
-                                    <td className="py-3 px-2 text-[var(--text-secondary)]">API & Widget Access</td>
+                                    <td className="py-3 px-2 text-[var(--text-secondary)]">Full API Access</td>
                                     <td className="text-center text-[var(--text-muted)]">✗</td>
                                     <td className="text-center text-[var(--accent)]">✓</td>
                                     <td className="text-center text-[var(--accent)]">✓</td>

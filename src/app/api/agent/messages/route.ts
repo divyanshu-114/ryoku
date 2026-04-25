@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { agents, conversations, messages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { triggerConversationMessage, pusherServer, PUSHER_EVENTS } from "@/lib/pusher";
+import { triggerConversationMessage, pusherServer, PUSHER_EVENTS } from "@/lib/pusher-server";
 
 // POST /api/agent/messages — Agent sends a message in a conversation
 export async function POST(req: Request) {

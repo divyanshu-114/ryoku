@@ -20,32 +20,37 @@ import {
     CheckCircle2,
     Shield,
 } from "lucide-react";
-import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher";
+import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher-client";
 
 export default function ChatPage() {
     const { slug } = useParams<{ slug: string }>();
-    const [conversationId] = useState(() => 
-        typeof crypto !== "undefined" && crypto.randomUUID 
-            ? crypto.randomUUID() 
-            : "00000000-0000-0000-0000-000000000000"
-    );
+    const [conversationId, setConversationId] = useState("00000000-0000-0000-0000-000000000000");
+
+    useEffect(() => {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+            setConversationId(crypto.randomUUID());
+        }
+    }, []);
+
+    const apiTarget = slug ? `/api/chat/${slug}` : "/api/chat/athena";
+    console.log(`[ChatPage] useChat initializing with api: ${apiTarget}`);
 
     // Setup useChat to hit our specific route
     const { messages, status, error, regenerate, sendMessage } = useChat({
         id: conversationId,
         // @ts-expect-error api is incorrectly missing from UseChatOptions type in this version
-        api: `/api/chat/${slug}`,
+        api: apiTarget,
         body: { conversationId, slug },
     });
 
-    // Fallback to reload if regenerate is not available (in some beta versions)
+    // Fallback to reload if regenerate is not available
     const reloadChat = regenerate || (() => { });
-
     const isLoading = status === "submitted" || status === "streaming";
-    const [input, setInput] = useState("");
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [localInput, setLocalInput] = useState("");
+
+    const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
-        setInput(val);
+        setLocalInput(val);
 
         // Send typing event every 2 seconds
         if (val.trim() && Date.now() - lastTypingSentRef.current > 2000) {
@@ -59,9 +64,9 @@ export default function ChatPage() {
     };
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
-        if (!input.trim() || isLoading) return;
-        sendMessage({ text: input });
-        setInput("");
+        if (!localInput.trim() || isLoading) return;
+        sendMessage({ text: localInput });
+        setLocalInput("");
     };
 
     const [accentColor] = useState("var(--accent)");
@@ -219,6 +224,7 @@ export default function ChatPage() {
 
     // Delete anonymous chat on session close
     useEffect(() => {
+        if (!slug || !conversationId) return;
         const handleSessionClose = () => {
             if (!contactSubmitted) {
                 fetch(`/api/chat/${slug}?conversationId=${conversationId}`, {
@@ -238,14 +244,17 @@ export default function ChatPage() {
     }, [conversationId, slug, contactSubmitted]);
 
     const handleEscalate = async (email: string, phone: string) => {
+        if (!slug) return;
         try {
             await fetch("/api/chat/escalate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ conversationId, slug, reason: "User explicitly requested human agent", email, phone }),
             });
-            // Also push a local message to the user that we are transferring them
-            sendMessage({ text: "I would like to speak to a human agent, please." });
+            // Use sendMessage to add a message to the chat
+            sendMessage({ 
+                text: "I would like to speak to a human agent, please." 
+            });
         } catch (err) {
             console.error("Escalation failed", err);
         }
@@ -286,6 +295,7 @@ export default function ChatPage() {
 
     // Fetch business info
     useEffect(() => {
+        if (!slug) return;
         async function fetchBusiness() {
             try {
                 await fetch(`/api/chat/${slug}`, {
@@ -322,14 +332,18 @@ export default function ChatPage() {
     };
 
     return (
-        <main className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
+        <main key={slug || "athena"} className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
             {/* Header */}
             <header
-                className="flex items-center gap-3 px-5 py-4 shrink-0 backdrop-blur-md sticky top-0 z-50"
-                style={{ borderBottom: "1px solid var(--border-subtle)", background: "rgba(255, 255, 255, 0.8)" }}
+                className="flex items-center gap-3 px-4 py-4 sm:px-6 sm:py-5 shrink-0 backdrop-blur-xl sticky top-0 z-50 transition-all duration-300"
+                style={{ 
+                    borderBottom: "1px solid var(--border-subtle)", 
+                    background: "rgba(255, 255, 255, 0.7)",
+                    boxShadow: "0 4px 30px rgba(0, 0, 0, 0.03)"
+                }}
             >
                 <div
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--accent)]/20 transition-transform hover:scale-105"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--accent)]/20 transition-transform hover:scale-105"
                     style={{ background: `linear-gradient(135deg, ${accentColor}, var(--accent-light))` }}
                 >
                     <Bot className="w-5 h-5 text-white" />
@@ -420,10 +434,10 @@ export default function ChatPage() {
                                 }}`}
                             style={
                                 msg.role === "user"
-                                    ? { background: accentColor }
+                                    ? { background: `linear-gradient(135deg, ${accentColor}, var(--accent-light))`, boxShadow: "0 4px 15px -3px rgba(234, 88, 12, 0.2)" }
                                     : msg.role === "system"
                                         ? { background: "var(--bg-card)", border: "1px solid var(--border-subtle)", color: "var(--text-muted)", fontSize: "11px" }
-                                        : { background: "white", border: "1px solid var(--border-subtle)", color: "var(--text-primary)", boxShadow: "0 2px 10px -4px rgba(0,0,0,0.08)" }
+                                        : { background: "white", border: "1px solid var(--border-subtle)", color: "var(--text-primary)", boxShadow: "0 4px 20px -8px rgba(0,0,0,0.12)" }
                             }
                         >
                             <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -520,19 +534,19 @@ export default function ChatPage() {
                     <motion.div 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-center"
+                        className="flex justify-start max-w-3xl mx-auto px-1"
                     >
                         <button
                             onClick={handleTalkToAgentClick}
-                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all border shadow-sm hover:shadow-md cursor-pointer group"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border shadow-sm hover:shadow-md cursor-pointer group active:scale-95"
                             style={{ 
                                 borderColor: "var(--border-subtle)", 
                                 color: "var(--text-secondary)",
-                                background: "var(--bg-card)"
+                                background: "white"
                             }}
                         >
                             <Headphones className="w-3.5 h-3.5 text-[var(--accent)] group-hover:scale-110 transition-transform" />
-                            <span>Talk to a real agent</span>
+                            <span>Speak to a human</span>
                         </button>
                     </motion.div>
                 )}
@@ -543,8 +557,8 @@ export default function ChatPage() {
                     className="flex items-center gap-3 max-w-3xl mx-auto"
                 >
                     <input
-                        value={input}
-                        onChange={handleInputChange}
+                        value={localInput}
+                        onChange={onInputChange}
                         placeholder="Type a message..."
                         className="input-field flex-1 py-3"
                         disabled={isLoading}
@@ -552,7 +566,7 @@ export default function ChatPage() {
                     />
                     <button
                         type="submit"
-                        disabled={isLoading || !input.trim()}
+                        disabled={isLoading || !localInput.trim()}
                         className="w-11 h-11 rounded-xl flex items-center justify-center transition-all disabled:opacity-30 cursor-pointer"
                         style={{ background: accentColor }}
                     >

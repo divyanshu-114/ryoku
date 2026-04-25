@@ -1,4 +1,4 @@
-import { pusherServer, PUSHER_EVENTS } from "@/lib/pusher";
+import { pusherServer, PUSHER_EVENTS } from "@/lib/pusher-server";
 import { NextResponse } from "next/server";
 
 // POST /api/chat/typing

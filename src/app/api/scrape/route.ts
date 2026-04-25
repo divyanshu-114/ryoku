@@ -33,6 +33,8 @@ export async function POST(req: Request) {
         const hostname = parsed.hostname.toLowerCase();
         if (
             hostname === "localhost" ||
+            hostname === "::1" ||
+            hostname === "0000:0000:0000:0000:0000:0000:0000:0001" ||
             /^127\./.test(hostname) ||
             /^192\.168\./.test(hostname) ||
             /^10\./.test(hostname) ||

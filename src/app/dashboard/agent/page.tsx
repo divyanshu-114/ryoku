@@ -8,7 +8,7 @@ import {
     AlertTriangle, Zap, MessageSquare, ChevronRight,
     CheckCircle2, Plus, X, Volume2, Mail, Shield, Phone,
 } from "lucide-react";
-import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher";
+import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher-client";
 import { showToast } from "@/lib/toast";
 
 interface AgentProfile { id: string; businessId: string; displayName: string; status: string; }
@@ -281,13 +281,13 @@ export default function AgentDashboardPage() {
                     </div>
                     <div>
                         <h1 className="text-sm font-bold text-[var(--text-primary)] leading-none">Agent Workspace</h1>
-                        <p className="text-[10px] text-[var(--text-muted)] mt-1 font-medium tracking-wide uppercase">Business Command Center</p>
+                        <p className="text-[12px] text-[var(--text-muted)] mt-1 font-medium tracking-wide uppercase">Business Command Center</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end mr-2">
                         <span className="text-[11px] font-semibold text-[var(--text-primary)]">{agent?.displayName}</span>
-                        <span className="text-[9px] text-[var(--text-muted)]">Verified Expert</span>
+                        <span className="text-[12px] text-[var(--text-muted)]">Verified Expert</span>
                     </div>
                     <button onClick={toggleStatus} className="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:shadow-md cursor-pointer border active:scale-95" 
                         style={{ background: "white", borderColor: "var(--border-subtle)" }}>
@@ -320,7 +320,7 @@ export default function AgentDashboardPage() {
                                 { key: "active", label: "Live", count: activeCount },
                             ] as const).map(tab => (
                                 <button key={tab.key} onClick={() => setQueueTab(tab.key)}
-                                    className={`flex-1 px-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${queueTab === tab.key ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--text-muted)] hover:bg-white"}`}>
+                                    className={`flex-1 px-2 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider transition-all cursor-pointer ${queueTab === tab.key ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--text-muted)] hover:bg-white"}`}>
                                     {tab.label}
                                 </button>
                             ))}
@@ -346,10 +346,10 @@ export default function AgentDashboardPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <p className="text-xs font-medium text-[var(--text-primary)] truncate">{c.customerName || "Anonymous"}</p>
-                                        {c.status === "escalated" && <span className="shrink-0 px-1 py-0.5 rounded text-[8px] font-bold uppercase bg-red-500/15 text-red-400">urgent</span>}
+                                        {c.status === "escalated" && <span className="shrink-0 px-1 py-0.5 rounded text-[12px] font-bold uppercase bg-red-500/15 text-red-400">urgent</span>}
                                     </div>
-                                    <p className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">{c.lastMessage?.content || `${c.messageCount} messages`}</p>
-                                    <p className="text-[9px] text-[var(--text-muted)] mt-0.5">{new Date(c.updatedAt).toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" })}</p>
+                                    <p className="text-[12px] text-[var(--text-muted)] truncate mt-0.5">{c.lastMessage?.content || `${c.messageCount} messages`}</p>
+                                    <p className="text-[12px] text-[var(--text-muted)] mt-0.5">{new Date(c.updatedAt).toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" })}</p>
                                 </div>
                                 <ChevronRight className="w-3 h-3 text-[var(--text-muted)] shrink-0 mt-1" />
                             </button>
@@ -379,10 +379,10 @@ export default function AgentDashboardPage() {
                                     <div>
                                         <p className="text-sm font-semibold text-[var(--text-primary)]">{selectedConvoData?.customerName || "Anonymous"}</p>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            {selectedConvoData?.customerEmail && <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-0.5"><Mail className="w-2.5 h-2.5" /> {selectedConvoData.customerEmail}</span>}
-                                            {selectedConvoData?.customerPhone && <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-0.5"><Phone className="w-2.5 h-2.5" /> {selectedConvoData.customerPhone}</span>}
-                                            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${selectedConvoData?.status === "escalated" ? "bg-red-500/15 text-red-400" : "bg-[var(--accent-glow)] text-[var(--accent-light)]"}`}>{selectedConvoData?.status}</span>
-                                            <span className="text-[10px] text-[var(--text-muted)]">{chatMessages.length} msgs</span>
+                                            {selectedConvoData?.customerEmail && <span className="text-[12px] text-[var(--text-muted)] flex items-center gap-0.5"><Mail className="w-2.5 h-2.5" /> {selectedConvoData.customerEmail}</span>}
+                                            {selectedConvoData?.customerPhone && <span className="text-[12px] text-[var(--text-muted)] flex items-center gap-0.5"><Phone className="w-2.5 h-2.5" /> {selectedConvoData.customerPhone}</span>}
+                                            <span className={`text-[12px] font-bold uppercase px-1.5 py-0.5 rounded ${selectedConvoData?.status === "escalated" ? "bg-red-500/15 text-red-400" : "bg-[var(--accent-glow)] text-[var(--accent-light)]"}`}>{selectedConvoData?.status}</span>
+                                            <span className="text-[12px] text-[var(--text-muted)]">{chatMessages.length} msgs</span>
                                         </div>
                                     </div>
                                 </div>
@@ -429,11 +429,11 @@ export default function AgentDashboardPage() {
                                                     <p className="whitespace-pre-wrap">{msg.content}</p>
                                                 </div>
                                                 <div className={`flex items-center gap-2 mt-1 px-1 ${isCustomer ? "" : "flex-row-reverse"}`}>
-                                                    <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">
+                                                    <span className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-tight">
                                                         {isAgent ? "You" : msg.role === "assistant" ? "Bot" : "Customer"}
                                                     </span>
-                                                    <span className="text-[10px] text-[var(--text-muted)] opacity-60">•</span>
-                                                    <span className="text-[10px] text-[var(--text-muted)]">
+                                                    <span className="text-[12px] text-[var(--text-muted)] opacity-60">•</span>
+                                                    <span className="text-[12px] text-[var(--text-muted)]">
                                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
@@ -451,7 +451,7 @@ export default function AgentDashboardPage() {
                                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "0ms" }} />
                                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "150ms" }} />
                                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "300ms" }} />
-                                                <span className="text-[10px] font-bold text-emerald-500 uppercase ml-2 tracking-widest">Typing</span>
+                                                <span className="text-[12px] font-bold text-emerald-500 uppercase ml-2 tracking-widest">Typing</span>
                                             </div>
                                         </div>
                                     </div>
@@ -464,7 +464,7 @@ export default function AgentDashboardPage() {
                                 {cannedResponses.map(cr => (
                                     <div key={cr.id} className="shrink-0 flex items-center gap-1 group">
                                         <button onClick={() => setInput(cr.content)}
-                                            className="px-2.5 py-1 rounded-full text-[10px] font-medium text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                                            className="px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer"
                                             style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
                                             title={cr.content}>
                                             {cr.shortcut || cr.title}

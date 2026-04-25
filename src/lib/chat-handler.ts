@@ -1,7 +1,7 @@
 import { streamText, tool } from "ai";
 import { db } from "@/lib/db";
 import { businesses, conversations, messages as dbMessages, analyticsEvents } from "@/lib/db/schema";
-import { triggerConversationMessage, triggerNewConversation } from "@/lib/pusher";
+import { triggerConversationMessage, triggerNewConversation } from "@/lib/pusher-server";
 import { withRetry, generateEmbedding } from "@/lib/ai-provider";
 import { analyzeSentiment, trackKnowledgeGap, logAnalyticsEvent } from "@/lib/intelligence";
 import {
@@ -17,27 +17,10 @@ import { eq, sql, and } from "drizzle-orm";
 import { getBusinessPlan } from "@/lib/billing";
 import { z } from "zod";
 
-export const maxDuration = 60;
-export const dynamic = "force-dynamic";
-
-// CORS
-export async function OPTIONS() {
-    return new Response(null, {
-        status: 200,
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-    });
-}
-
-export async function POST(
+export async function handleChatPOST(
     req: Request,
-    { params }: { params: Promise<{ slug: string }> }
+    slug: string
 ) {
-    const { slug } = await params;
-
     try {
         const body = await req.json();
         const { messages, id: bodyId, conversationId: bodyConvId } = body;
@@ -175,7 +158,6 @@ export async function POST(
                     id: savedUserMsg.id,
                     role: "user",
                     content: userMessage,
-                    sentiment: calculatedSentiment,
                 });
             }
 
@@ -210,6 +192,7 @@ export async function POST(
                 conversationId,
                 topSimilarity,
                 threshold: autoHandoffThreshold,
+                userSentiment,
             });
         }
 
@@ -405,8 +388,6 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                                 threshold: autoHandoffThreshold,
                                 userSentiment,
                             });
-                            // System prompt already instructs the LLM to proactively offer handoff,
-                            // and the LLM will now tell them to use the UI button via the escalateToAgent tool or its own text.
                         }
 
                         await db.insert(dbMessages).values({
@@ -447,9 +428,8 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
     }
 }
 
-export async function DELETE(
-    req: Request,
-    { params }: { params: Promise<{ slug: string }> }
+export async function handleChatDELETE(
+    req: Request
 ) {
     const { searchParams } = new URL(req.url);
     const conversationId = searchParams.get("conversationId");

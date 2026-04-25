@@ -104,14 +104,14 @@ export default function Navbar() {
           {/* Right: Profile */}
           <div className="flex items-center gap-3">
             {/* Mobile nav toggle */}
-            <div className="md:hidden flex items-center gap-1">
+            <div className="md:hidden flex items-center gap-2">
               {dashLinks.map(link => {
                 const isActive = pathname === link.href || (link.href !== "/dashboard" && pathname?.startsWith(link.href));
                 const Icon = link.icon;
                 return (
                   <Link key={link.href} href={link.href}
-                    className={`p-2 rounded-lg transition ${isActive ? "bg-[var(--accent-glow)] text-[var(--accent-light)]" : "text-[var(--text-muted)]"}`}>
-                    <Icon className="w-4 h-4" />
+                    className={`p-3 rounded-lg transition-all active:scale-95 ${isActive ? "bg-[var(--accent-glow)] text-[var(--accent-light)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}>
+                    <Icon className="w-5 h-5" />
                   </Link>
                 );
               })}

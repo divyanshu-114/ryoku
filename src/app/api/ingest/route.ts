@@ -4,8 +4,14 @@ import { db } from "@/lib/db";
 import { businesses, documents } from "@/lib/db/schema";
 import { generateEmbeddings } from "@/lib/ai-provider";
 import { eq } from "drizzle-orm";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
+// Polyfill for pdf-parse which expects browser globals
+if (typeof global !== "undefined" && typeof (global as any).DOMMatrix === "undefined") {
+    (global as any).DOMMatrix = class DOMMatrix { };
+}
+if (typeof global !== "undefined" && typeof (global as any).Uint8ClampedArray === "undefined") {
+    (global as any).Uint8ClampedArray = Uint8ClampedArray;
+}
+
 import mammoth from "mammoth";
 
 export const maxDuration = 60;
@@ -171,7 +177,9 @@ export async function POST(req: Request) {
 
             let fileText = "";
             if (name.endsWith(".pdf")) {
-                const parsed = await pdfParse(buffer);
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const pdf = require("pdf-parse");
+                const parsed = await pdf(buffer);
                 fileText = parsed.text;
             } else if (name.endsWith(".docx") || name.endsWith(".doc")) {
                 const result = await mammoth.extractRawText({ buffer });

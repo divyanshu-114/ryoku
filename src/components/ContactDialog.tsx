@@ -210,7 +210,7 @@ const COUNTRY_CODES = [
 interface ContactDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    plan?: "Pro" | "Enterprise";
+    plan?: "Free" | "Pro" | "Enterprise";
 }
 
 interface FormState {
@@ -222,7 +222,7 @@ interface FormState {
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
-export function ContactDialog({ isOpen, onClose, plan = "Pro" }: ContactDialogProps) {
+export function ContactDialog({ isOpen, onClose, plan = "Free" }: ContactDialogProps) {
     const [form, setForm] = useState<FormState>({
         email: "",
         businessType: "",
