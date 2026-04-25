@@ -136,9 +136,9 @@ export default function AnalyticsPage() {
                             <button
                                 key={p}
                                 onClick={() => setPeriod(p)}
-                                className={`px-4 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${period === p
+                                className={`px-4 py-2 rounded-lg text-xs font-medium cursor-pointer ${period === p
                                     ? "bg-[var(--accent-glow)] text-[var(--accent-light)] ring-1 ring-[var(--accent)]"
-                                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                    : "text-[var(--text-muted)]"
                                     }`}
                             >
                                 {p === "7d" ? "7 Days" : p === "30d" ? "30 Days" : "90 Days"}

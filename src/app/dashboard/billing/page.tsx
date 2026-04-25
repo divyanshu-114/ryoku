@@ -88,7 +88,7 @@ function BillingContent() {
                     </div>
 
                     {/* Pro Plan */}
-                    <div className="glass-card p-6 flex flex-col ring-2 ring-[var(--accent)] glow-accent">
+                    <div className="glass-card p-6 flex flex-col border border-[var(--border-subtle)]">
                         <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Pro</h3>
                         <p className="text-xs text-[var(--text-muted)] mb-4">For businesses with real customers</p>
                         <div className="mb-4">

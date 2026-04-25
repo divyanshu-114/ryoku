@@ -95,7 +95,7 @@ export default function ConversationDetailPage() {
                 <div>
                     <button
                         onClick={() => router.push("/dashboard/conversations")}
-                        className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition mb-3 cursor-pointer"
+                        className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mb-3 cursor-pointer"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" /> All Conversations
                     </button>

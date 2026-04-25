@@ -725,7 +725,7 @@ export default function DashboardPage() {
                                     />
                                     <label
                                         htmlFor="faq-upload"
-                                        className="flex items-center justify-center gap-3 p-6 rounded-xl cursor-pointer transition-all hover:border-[var(--accent)]"
+                                        className="flex items-center justify-center gap-3 p-6 rounded-xl cursor-pointer"
                                         style={{ background: "var(--bg-card)", border: "2px dashed var(--border-default)" }}
                                     >
                                         <Upload className="w-5 h-5 text-[var(--accent-light)]" />
@@ -844,7 +844,7 @@ export default function DashboardPage() {
                         <div className="flex flex-col max-h-[60vh] lg:max-h-[500px]">
                             <div className="flex items-center justify-between mb-4 shrink-0">
                                 <label className="text-sm font-medium text-[var(--text-secondary)]">Custom Q&A Pairs</label>
-                                <button onClick={addFaq} className="flex items-center gap-1.5 text-xs font-medium text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer">
+                                <button onClick={addFaq} className="flex items-center gap-1.5 text-xs font-medium text-[var(--accent-light)] cursor-pointer">
                                     <Plus className="w-3.5 h-3.5" /> Add Question
                                 </button>
                             </div>
@@ -859,7 +859,7 @@ export default function DashboardPage() {
                                                 onChange={(e) => updateFaq(i, "question", e.target.value)}
                                             />
                                             {config.faqs.length > 1 && (
-                                                <button onClick={() => removeFaq(i)} className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)] transition cursor-pointer">
+                                                <button onClick={() => removeFaq(i)} className="p-2 text-[var(--text-muted)] cursor-pointer">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             )}
@@ -904,7 +904,7 @@ export default function DashboardPage() {
                             <button onClick={() => setIsEditing(true)} className="btn-secondary text-xs py-2.5 px-5 flex items-center gap-2">
                                 <Settings className="w-3.5 h-3.5" /> Edit
                             </button>
-                            <button onClick={handleDelete} className="btn-secondary text-xs py-2.5 px-5 text-[var(--danger)] hover:border-[var(--danger)]">
+                            <button onClick={handleDelete} className="btn-secondary text-xs py-2.5 px-5 text-[var(--danger)]">
                                 Delete
                             </button>
                         </div>
@@ -971,7 +971,7 @@ export default function DashboardPage() {
                             <button
                                 key={href}
                                 onClick={() => router.push(href)}
-                                className="glass-card p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-[var(--accent)] transition-all cursor-pointer"
+                                className="glass-card p-4 flex items-center gap-3 text-left border border-[var(--border-subtle)] cursor-pointer"
                             >
                                 <Icon className="w-5 h-5 text-[var(--accent)] shrink-0" />
                                 <div className="min-w-0">
@@ -994,7 +994,7 @@ export default function DashboardPage() {
                             </code>
                             <button
                                 onClick={() => { navigator.clipboard.writeText(apiEndpoint); setCopiedApi(true); setTimeout(() => setCopiedApi(false), 2000); }}
-                                className="text-xs font-semibold text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                                className="text-xs font-semibold text-[var(--accent-light)] cursor-pointer"
                             >
                                 {copiedApi ? "Copied!" : "[ Copy ]"}
                             </button>
@@ -1044,7 +1044,7 @@ export default function DashboardPage() {
                                     </code>
                                     <button
                                         onClick={() => { navigator.clipboard.writeText(newlyCreatedKey); }}
-                                        className="text-xs text-[var(--accent-light)] hover:text-[var(--text-primary)] cursor-pointer"
+                                        className="text-xs text-[var(--accent-light)] cursor-pointer"
                                     >
                                         <Copy className="w-4 h-4" />
                                     </button>
@@ -1063,7 +1063,7 @@ export default function DashboardPage() {
                                         </div>
                                         <button
                                             onClick={() => revokeApiKey(k.id)}
-                                            className="text-xs text-[var(--danger)] hover:text-red-400 cursor-pointer"
+                                            className="text-xs text-[var(--danger)] cursor-pointer"
                                         >
                                             Revoke
                                         </button>
@@ -1084,10 +1084,10 @@ export default function DashboardPage() {
                                 <button
                                     key={tab}
                                     onClick={() => setSnippetTab(tab)}
-                                    className={`px-4 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
+                                    className={`px-4 py-2 rounded-lg text-xs font-medium ${
                                         snippetTab === tab
                                             ? "bg-[var(--accent-glow)] text-[var(--accent-light)] ring-1 ring-[var(--accent)]"
-                                            : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                            : "text-[var(--text-muted)]"
                                     }`}
                                 >
                                     {tab === "curl" ? "cURL" : tab === "react" ? "React" : "Vanilla JS"}
@@ -1133,7 +1133,7 @@ const reader = response.body.getReader();
                                     setCopiedSnippet(true);
                                     setTimeout(() => setCopiedSnippet(false), 2000);
                                 }}
-                                className="absolute top-3 right-3 text-xs text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                                className="absolute top-3 right-3 text-xs text-[var(--accent-light)] cursor-pointer"
                             >
                                 {copiedSnippet ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                             </button>
@@ -1193,7 +1193,7 @@ const reader = response.body.getReader();
                             Fill in the steps below, or{" "}
                             <button
                                 onClick={() => setQuickLaunchMode(true)}
-                                className="text-[var(--accent-light)] font-semibold hover:underline cursor-pointer"
+                                className="text-[var(--accent-light)] font-semibold cursor-pointer"
                             >
                                 use Quick Launch
                             </button>{" "}
@@ -1249,11 +1249,11 @@ const reader = response.body.getReader();
                             <button
                                 key={i}
                                 onClick={() => setStep(i)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${step === i
-                                    ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${step === i
+                                    ? "bg-[var(--accent)] text-white"
                                     : i < step
                                         ? "text-[var(--success)]"
-                                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5"
+                                        : "text-[var(--text-muted)]"
                                     }`}
                             >
                                 {i < step ? <Check className="w-3.5 h-3.5" /> : <s.icon className="w-3.5 h-3.5" />}

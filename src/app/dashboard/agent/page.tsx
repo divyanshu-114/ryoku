@@ -274,7 +274,7 @@ export default function AgentDashboardPage() {
             {/* Top Bar */}
             <header className="sticky top-0 z-40 px-6 py-4 flex items-center justify-between shrink-0 backdrop-blur-xl border-b" style={{ background: "rgba(255, 255, 255, 0.8)", borderColor: "var(--border-subtle)" }}>
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[var(--accent)] flex items-center justify-center shadow-lg shadow-[var(--accent)]/20">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--accent)] flex items-center justify-center shadow-sm">
                         <Zap className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -287,7 +287,7 @@ export default function AgentDashboardPage() {
                         <span className="text-[11px] font-semibold text-[var(--text-primary)]">{agent?.displayName}</span>
                         <span className="text-[12px] text-[var(--text-muted)]">Verified Expert</span>
                     </div>
-                    <button onClick={toggleStatus} className="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:shadow-md cursor-pointer border active:scale-95" 
+                    <button onClick={toggleStatus} className="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border active:scale-95" 
                         style={{ background: "white", borderColor: "var(--border-subtle)" }}>
                         <Circle className="w-2.5 h-2.5 fill-current" style={{ color: statusColors[agentStatus] }} />
                         <span className="capitalize text-[var(--text-secondary)]">{agentStatus}</span>
@@ -334,7 +334,7 @@ export default function AgentDashboardPage() {
                             </div>
                         ) : filteredQueue.map(c => (
                             <button key={c.id} onClick={() => { setSelectedConvo(c.id); setMobileShowChat(true); }}
-                                className={`w-full p-3 flex items-start gap-3 text-left transition cursor-pointer ${selectedConvo === c.id ? "bg-[var(--accent-glow)]" : "hover:bg-[var(--bg-card)]"}`}
+                                className={`w-full p-3 flex items-start gap-3 text-left cursor-pointer ${selectedConvo === c.id ? "bg-[var(--accent-glow)]" : "bg-[var(--bg-card)]"}`}
                                 style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                                 <div className="shrink-0 mt-1">
                                     {c.status === "escalated"
@@ -370,7 +370,7 @@ export default function AgentDashboardPage() {
                             {/* Conversation Header */}
                             <div className="shrink-0 px-4 py-3 flex items-center justify-between" style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border-subtle)" }}>
                                 <div className="flex items-center gap-3">
-                                    <button onClick={() => { setMobileShowChat(false); }} className="md:hidden text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"><ArrowLeft className="w-4 h-4" /></button>
+                                    <button onClick={() => { setMobileShowChat(false); }} className="md:hidden text-[var(--text-muted)] cursor-pointer"><ArrowLeft className="w-4 h-4" /></button>
                                     <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] flex items-center justify-center" style={{ border: "1px solid var(--border-subtle)" }}>
                                         <User className="w-4 h-4 text-[var(--text-muted)]" />
                                     </div>
@@ -388,7 +388,7 @@ export default function AgentDashboardPage() {
                                     {/* Take Over — only show if agent is not already assigned */}
                                     {selectedConvoData?.assignedAgent !== agent?.id && (
                                         <button onClick={takeOverConversation} disabled={takingOver}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition cursor-pointer disabled:opacity-40"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-400 disabled:opacity-40"
                                             style={{ border: "1px solid rgba(59,130,246,0.2)" }}>
                                             {takingOver ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                                             Take Over
@@ -396,7 +396,7 @@ export default function AgentDashboardPage() {
                                     )}
                                     {/* Resolve */}
                                     <button onClick={resolveConversation} disabled={resolving}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition cursor-pointer disabled:opacity-40"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 disabled:opacity-40"
                                         style={{ border: "1px solid rgba(16,185,129,0.2)" }}>
                                         {resolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                         Resolve
