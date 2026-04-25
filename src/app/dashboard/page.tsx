@@ -562,9 +562,9 @@ export default function DashboardPage() {
                                     <button
                                         key={bt.id}
                                         onClick={() => updateConfig("businessType", bt.id)}
-                                        className={`p-3 rounded-xl text-left transition-all cursor-pointer ${config.businessType === bt.id
+                                        className={`p-3 rounded-xl text-left ${config.businessType === bt.id
                                             ? "ring-2 ring-[var(--accent)] bg-[var(--accent-glow)]"
-                                            : "bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)]"
+                                            : "bg-[var(--bg-card)]"
                                             }`}
                                         style={{ border: config.businessType === bt.id ? "1px solid var(--accent)" : "1px solid var(--border-subtle)" }}
                                     >
@@ -830,7 +830,7 @@ export default function DashboardPage() {
                                         </div>
                                         <button
                                             onClick={() => updateConfig("faqs", getFaqPack(config.businessType as string))}
-                                            className="text-xs font-bold text-[var(--accent)] hover:underline cursor-pointer"
+                                            className="text-xs font-bold text-[var(--accent)] cursor-pointer"
                                         >
                                             Load {getFaqPack(config.businessType as string).length} Qs →
                                         </button>

@@ -210,7 +210,7 @@ export default function AnalyticsPage() {
                                     
                                     return (
                                         <div key={d.date || i} className="flex-1 flex flex-col items-center justify-end gap-1 group relative h-full">
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)] text-[12px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-sm">
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)] text-[12px] font-bold opacity-100 whitespace-nowrap z-20 shadow-sm">
                                                 {countVal} msgs
                                             </div>
                                             <span className="text-[12px] text-[var(--text-muted)] font-medium z-10">{countVal}</span>
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
                                             {/* Bar Track Wrapper */}
                                             <div className="w-full max-w-[32px] flex-1 flex flex-col justify-end">
                                                 <div
-                                                    className="w-full rounded-t-sm transition-all duration-500 ease-out hover:brightness-125 cursor-help"
+                                                    className="w-full rounded-t-sm cursor-help"
                                                     style={{
                                                         height: `${Math.max(barHeight, 4)}%`,
                                                         background: "linear-gradient(180deg, var(--accent), var(--accent-glow))",

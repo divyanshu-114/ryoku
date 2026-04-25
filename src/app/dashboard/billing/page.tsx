@@ -40,7 +40,7 @@ function BillingContent() {
             <div className="max-w-5xl mx-auto relative z-10 space-y-8">
                 {/* Header */}
                 <div>
-                    <button onClick={() => router.push("/dashboard")} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition mb-3 cursor-pointer">
+                    <button onClick={() => router.push("/dashboard")} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mb-3 cursor-pointer">
                         <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
                     </button>
                     <div className="flex items-center gap-2 mb-1">

@@ -318,7 +318,7 @@ export default function AgentDashboardPage() {
                                 { key: "active", label: "Live", count: activeCount },
                             ] as const).map(tab => (
                                 <button key={tab.key} onClick={() => setQueueTab(tab.key)}
-                                    className={`flex-1 px-2 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider transition-all cursor-pointer ${queueTab === tab.key ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--text-muted)] hover:bg-white"}`}>
+                                    className={`flex-1 px-2 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider cursor-pointer ${queueTab === tab.key ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--text-muted)]"}`}>
                                     {tab.label}
                                 </button>
                             ))}
@@ -462,19 +462,19 @@ export default function AgentDashboardPage() {
                                 {cannedResponses.map(cr => (
                                     <div key={cr.id} className="shrink-0 flex items-center gap-1 group">
                                         <button onClick={() => setInput(cr.content)}
-                                            className="px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--accent-light)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                                            className="px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--accent-light)] cursor-pointer"
                                             style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
                                             title={cr.content}>
                                             {cr.shortcut || cr.title}
                                         </button>
                                         <button onClick={() => deleteCannedResponse(cr.id)}
-                                            className="opacity-0 group-hover:opacity-100 transition cursor-pointer text-[var(--text-muted)] hover:text-red-400">
+                                            className="text-[var(--text-muted)] cursor-pointer">
                                             <X className="w-2.5 h-2.5" />
                                         </button>
                                     </div>
                                 ))}
                                 <button onClick={() => setShowCannedForm(!showCannedForm)}
-                                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[var(--accent-light)] hover:bg-[var(--accent-glow)] transition cursor-pointer"
+                                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[var(--accent-light)] cursor-pointer"
                                     style={{ border: "1px solid var(--border-subtle)" }}>
                                     <Plus className="w-3 h-3" />
                                 </button>
@@ -487,7 +487,7 @@ export default function AgentDashboardPage() {
                                     <input className="input-field text-xs flex-1" placeholder="Content" value={newCanned.content} onChange={e => setNewCanned(p => ({ ...p, content: e.target.value }))} />
                                     <input className="input-field text-xs w-20" placeholder="/shortcut" value={newCanned.shortcut} onChange={e => setNewCanned(p => ({ ...p, shortcut: e.target.value }))} />
                                     <button onClick={createCannedResponse} className="btn-primary py-1.5 px-3 text-xs">Save</button>
-                                    <button onClick={() => setShowCannedForm(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"><X className="w-4 h-4" /></button>
+                                    <button onClick={() => setShowCannedForm(false)} className="text-[var(--text-muted)] cursor-pointer"><X className="w-4 h-4" /></button>
                                 </div>
                             )}
 

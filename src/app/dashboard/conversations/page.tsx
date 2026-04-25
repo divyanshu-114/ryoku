@@ -91,7 +91,7 @@ export default function ConversationsPage() {
             <header className="sticky top-14 z-40 px-4 py-3 flex items-center justify-between shrink-0" style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border-subtle)" }}>
                 <button
                     onClick={() => router.push("/dashboard")}
-                    className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] cursor-pointer"
                 >
                     <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
                 </button>
@@ -123,9 +123,9 @@ export default function ConversationsPage() {
                             <button
                                 key={s || "all"}
                                 onClick={() => { setStatusFilter(s); setPage(1); }}
-                                className={`px-4 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${statusFilter === s
+                                className={`px-4 py-2 rounded-lg text-xs font-medium cursor-pointer ${statusFilter === s
                                     ? "bg-[var(--accent-glow)] text-[var(--accent-light)] ring-1 ring-[var(--accent)]"
-                                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                    : "text-[var(--text-muted)]"
                                     }`}
                             >
                                 {s ? STATUS_CONFIG[s]?.label || s : "All"}
@@ -156,7 +156,7 @@ export default function ConversationsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.02 }}
                                     onClick={() => router.push(`/dashboard/conversations/${convo.id}`)}
-                                    className="w-full glass-card p-4 flex items-center gap-4 text-left hover:ring-1 hover:ring-[var(--accent)] transition-all cursor-pointer"
+                                    className="w-full glass-card p-4 flex items-center gap-4 text-left border border-[var(--border-subtle)] cursor-pointer"
                                 >
                                     <div className="shrink-0">
                                         <StatusIcon className="w-4 h-4" style={{ color: statusInfo.color }} />
@@ -201,9 +201,9 @@ export default function ConversationsPage() {
                             <button
                                 key={p}
                                 onClick={() => setPage(p)}
-                                className={`w-8 h-8 rounded-lg text-xs font-medium transition cursor-pointer ${page === p
+                                className={`w-8 h-8 rounded-lg text-xs font-medium cursor-pointer ${page === p
                                     ? "bg-[var(--accent)] text-[var(--text-primary)]"
-                                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                    : "text-[var(--text-muted)]"
                                     }`}
                             >
                                 {p}
