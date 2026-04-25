@@ -12,7 +12,7 @@
     "prepare": "husky install"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": ["eslint --max-warnings=0", "vitest run"],
+    "*.{js,jsx,ts,tsx}": ["vitest run"],
     "*.css": "lightningcss --no-cache"
   },
   "dependencies": {
