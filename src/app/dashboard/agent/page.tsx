@@ -250,6 +250,8 @@ export default function AgentDashboardPage() {
     const activeCount = queue.filter(c => c.status === "active").length;
     const filteredQueue = queue
         .filter(c => {
+            // Only show escalated (pressed talk to agent) or active (live session) conversations
+            if (c.status !== "escalated" && c.status !== "active") return false;
             if (queueTab === "escalated") return c.status === "escalated";
             if (queueTab === "active") return c.status === "active";
             return true;
