@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Core Palette: White + Orange ── */
+  /* ── Core Palette: White + Indigo ── */
   --bg-primary: #ffffff;
   --bg-secondary: #fafafa;
   --bg-card: #ffffff;
-  --bg-card-hover: #fff8f3;
-  --bg-warm: #fff6ed;
-  --bg-warm-subtle: #fffcf9;
+  --bg-card-hover: #eef2ff;
+  --bg-warm: #eef2ff;
+  --bg-warm-subtle: #f8f5ff;
   --bg-dark: #111111;
 
   --border-subtle: rgba(0, 0, 0, 0.06);
@@ -26,7 +26,7 @@
   --accent-hover: rgba(99, 102, 241, 0.04);
 
   --success: #16a34a;
-  --warning: #ca8a04;
+  --warning: var(--accent-light);
   --danger: #dc2626;
 
   --gradient-accent: linear-gradient(135deg, #6366f1, #818cf8, #a78bfa);
@@ -256,7 +256,7 @@ section[id] {
 
 /* ── Glow ── */
 .glow-accent {
-  box-shadow: 0 0 40px rgba(234, 88, 12, 0.1), 0 0 80px rgba(234, 88, 12, 0.04);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.08);
 }
 
 .glow-dot {
@@ -264,14 +264,14 @@ section[id] {
   height: 8px;
   border-radius: 50%;
   background: var(--success);
-  box-shadow: 0 0 6px var(--success), 0 0 12px rgba(22, 163, 74, 0.25);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.14), 0 0 12px rgba(99, 102, 241, 0.08);
 }
 
 /* ── Ambient Background ── */
 .ambient-grid {
   background-image:
-    linear-gradient(rgba(234, 88, 12, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(234, 88, 12, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
   background-size: 64px 64px;
 }
 
@@ -280,7 +280,7 @@ section[id] {
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(234, 88, 12, 0.06), transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.06), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -332,11 +332,11 @@ section[id] {
 
   0%,
   100% {
-    box-shadow: 0 0 4px var(--accent), 0 0 12px rgba(234, 88, 12, 0.2);
+    box-shadow: 0 0 4px var(--accent), 0 0 12px rgba(99, 102, 241, 0.2);
   }
 
   50% {
-    box-shadow: 0 0 8px var(--accent), 0 0 24px rgba(234, 88, 12, 0.3);
+    box-shadow: 0 0 8px var(--accent), 0 0 24px rgba(99, 102, 241, 0.25);
   }
 }
 

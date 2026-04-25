@@ -37,7 +37,6 @@ function BillingContent() {
 
     return (
         <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
-            <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
             <div className="max-w-5xl mx-auto relative z-10 space-y-8">
                 {/* Header */}
                 <div>

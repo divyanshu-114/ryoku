@@ -245,7 +245,7 @@ export default function AgentDashboardPage() {
         } catch { showToast("Failed to delete", "error"); }
     };
 
-    const statusColors: Record<string, string> = { online: "var(--success)", away: "#f59e0b", offline: "var(--text-muted)" };
+    const statusColors: Record<string, string> = { online: "var(--success)", away: "var(--accent-light)", offline: "var(--text-muted)" };
     const escalatedCount = queue.filter(c => c.status === "escalated").length;
     const activeCount = queue.filter(c => c.status === "active").length;
     const filteredQueue = queue
@@ -271,8 +271,6 @@ export default function AgentDashboardPage() {
 
     return (
         <main className="h-[100dvh] ambient-grid relative flex flex-col pt-14">
-            <div className="ambient-glow" style={{ top: "-100px", left: "-100px" }} />
-
             {/* Top Bar */}
             <header className="sticky top-0 z-40 px-6 py-4 flex items-center justify-between shrink-0 backdrop-blur-xl border-b" style={{ background: "rgba(255, 255, 255, 0.8)", borderColor: "var(--border-subtle)" }}>
                 <div className="flex items-center gap-3">

@@ -141,9 +141,9 @@ export default function LandingPage() {
     <main className="bg-white selection:bg-[var(--accent)] selection:text-white relative">
       <AmbientBlobs />
       {/* ── HERO ── */}
-      <section className="relative w-full min-h-[100dvh] lg:min-h-screen flex flex-col justify-center snap-start py-24 px-5 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto overflow-hidden">
+      <section className="relative w-full min-h-[100dvh] lg:min-h-screen flex flex-col justify-center snap-start py-16 px-4 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto overflow-hidden">
         {/* Ambient Agent Activity Visual - Outer Background */}
-        <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-0 hidden md:block">
           <AmbientAgentActivity />
         </div>
 
@@ -172,11 +172,11 @@ export default function LandingPage() {
               className="text-[clamp(2.5rem,7vw,5.5rem)] font-black text-[var(--text-primary)] relative z-10"
             >
               <LetterReveal text="Chatbots" delay={0.2} />
-              <br className="hidden sm:block" />
+              <br />
               <span className="italic text-[var(--accent)]">
                 <LetterReveal text="for Your Business" delay={0.5} />
               </span>
-              <br className="hidden sm:block" />
+              <br />
               <span
                 style={{
                   WebkitTextStroke: "1.5px var(--text-primary)",
@@ -213,12 +213,12 @@ export default function LandingPage() {
             </div>
 
             {/* small proof strip */}
-            <div className="mt-12 flex items-center justify-center gap-8 opacity-60">
-              <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[var(--border-default)]" />
+            <div className="mt-10 md:mt-12 flex items-center justify-center gap-4 md:gap-8 opacity-60">
+              <div className="w-8 md:w-12 h-[1px] bg-gradient-to-r from-transparent to-[var(--border-default)]" />
               <span className="text-[10px] sm:text-[11px] font-black tracking-[0.2em] uppercase text-[var(--text-muted)]">
                 Free tier · No card required
               </span>
-              <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-[var(--border-default)]" />
+              <div className="w-8 md:w-12 h-[1px] bg-gradient-to-l from-transparent to-[var(--border-default)]" />
             </div>
           </motion.div>
         </motion.div>
@@ -258,9 +258,9 @@ export default function LandingPage() {
       {/* ── WHAT WE DO ── */}
       <section
         aria-label="Features overview"
-        className="min-h-[100dvh] lg:min-h-screen flex flex-col justify-center snap-start py-24 md:py-36 px-5 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto w-full"
+        className="min-h-auto lg:min-h-screen flex flex-col justify-center snap-start py-16 md:py-24 lg:py-36 px-4 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto w-full"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-16">
           <motion.div
             initial="initial"
             whileInView="animate"
@@ -280,7 +280,7 @@ export default function LandingPage() {
             variants={stagger}
             className="space-y-0 relative"
           >
-            <div className="absolute left-6 md:left-8 top-12 bottom-12 w-[1px] bg-[var(--border-subtle)] hidden sm:block" />
+            <div className="absolute left-6 md:left-8 top-12 bottom-12 w-[1px] bg-[var(--border-subtle)] hidden lg:block" />
             {[
               {
                 n: "01",
@@ -304,25 +304,25 @@ export default function LandingPage() {
               <motion.div
                 key={item.n}
                 variants={fadeUp}
-                className="grid grid-cols-[48px_1fr] md:grid-cols-[80px_1fr] gap-6 md:gap-8 py-10 md:py-14 group hover:pl-2 transition-all duration-300 relative bg-white"
+                className="grid grid-cols-[48px_1fr] md:grid-cols-[80px_1fr] gap-4 md:gap-8 py-8 md:py-10 group hover:pl-2 transition-all duration-300 relative bg-white"
               >
-                <div className="flex flex-col items-center gap-2 pt-1.5 md:pt-2">
+                <div className="flex flex-col items-center gap-2 pt-1">
                   <span className="text-[11px] md:text-sm font-bold text-[var(--text-muted)] tracking-widest font-mono z-10">
                     {item.n}
                   </span>
-                  <div className="w-px h-12 bg-gradient-to-b from-[var(--border-default)] to-transparent" />
+                  <div className="w-px h-10 md:h-12 bg-gradient-to-b from-[var(--border-default)] to-transparent" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-4 mb-4 text-[var(--accent)] opacity-40 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-4 mb-3 md:mb-4 text-[var(--accent)] opacity-40 group-hover:opacity-100 transition-opacity">
                     {item.icon}
                   </div>
                   <h3
                     style={{ fontFamily: "'Playfair Display', serif" }}
-                    className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-5 italic group-hover:text-[var(--accent)] transition-colors duration-300"
+                    className="text-xl md:text-3xl lg:text-4xl font-bold text-[var(--text-primary)] mb-4 md:mb-5 italic group-hover:text-[var(--accent)] transition-colors duration-300"
                   >
                     {item.title}
                   </h3>
-                  <p className="text-[var(--text-secondary)] text-[1.05rem] leading-relaxed max-w-xl">
+                  <p className="text-[var(--text-secondary)] text-[1rem] md:text-[1.05rem] leading-relaxed max-w-xl">
                     {item.body}
                   </p>
                 </div>
@@ -336,7 +336,7 @@ export default function LandingPage() {
       <section
         id="how-it-works"
         aria-label="How it works"
-        className="w-full min-h-[100dvh] lg:min-h-screen flex flex-col justify-center snap-start bg-[var(--text-primary)] py-24 md:py-36 px-5 sm:px-8 md:px-14 lg:px-20 overflow-hidden relative"
+        className="w-full min-h-auto lg:min-h-screen flex flex-col justify-center snap-start bg-[var(--text-primary)] py-16 md:py-24 lg:py-36 px-4 sm:px-8 md:px-14 lg:px-20 overflow-hidden relative"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
         <motion.div
@@ -356,11 +356,11 @@ export default function LandingPage() {
             <motion.h2
               variants={fadeUp}
               style={{ fontFamily: "'Playfair Display', serif" }}
-              className="text-4xl md:text-5xl lg:text-[4rem] font-black text-white leading-tight lg:leading-[1.1]"
+              className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight lg:leading-[1.1]"
             >
               From setup to
               <br />
-              <span className="italic text-[var(--accent-warm)]">serving customers</span>
+              <span className="italic text-white">serving customers</span>
             </motion.h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10 divide-y md:divide-y-0 md:divide-x divide-white/10">
@@ -412,7 +412,7 @@ export default function LandingPage() {
       <section
         id="features"
         aria-label="Capabilities"
-        className="w-full flex flex-col justify-center snap-start py-6 md:py-10 px-5 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto"
+        className="w-full flex flex-col justify-center snap-start py-12 md:py-16 lg:py-20 px-4 sm:px-8 md:px-14 lg:px-20 max-w-[1400px] mx-auto"
       >
         <motion.div
           initial="initial"
@@ -430,13 +430,13 @@ export default function LandingPage() {
             <motion.h2
               variants={fadeUp}
               style={{ fontFamily: "'Playfair Display', serif" }}
-              className="text-4xl md:text-5xl lg:text-[3.5rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1]"
+              className="text-3xl md:text-4xl lg:text-[3.5rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1]"
             >
-              Not just a chatbot —<br />
+              Not just a chatbot —<br className="hidden sm:block" />
               <span className="italic">an agent that acts.</span>
             </motion.h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-transparent">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 bg-transparent">
             {[
               {
                 label: "FAQ Answering",
@@ -498,20 +498,20 @@ export default function LandingPage() {
                 variants={fadeUp}
                 whileHover={{ y: -5, rotateX: 2, rotateY: 2 }}
                 style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
-                className="bg-white px-6 md:px-8 py-6 md:py-8 group hover:bg-[var(--bg-secondary)] transition-all duration-300 border border-[var(--border-subtle)] hover:border-[var(--accent)]/20 shadow-sm hover:shadow-xl"
+                className="bg-white px-5 md:px-8 py-5 md:py-8 group hover:bg-[var(--bg-secondary)] transition-all duration-300 border border-[var(--border-subtle)] hover:border-[var(--accent)]/20 shadow-sm hover:shadow-xl"
               >
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                  <div className="p-3 bg-[var(--bg-warm)] rounded-xl text-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                  <div className="p-2.5 md:p-3 bg-[var(--bg-warm)] rounded-xl text-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors">
                     {f.icon}
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] px-3 py-1.5 bg-[var(--accent-glow)] rounded-full border border-[var(--accent)]/10">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] px-2 md:px-3 py-1 md:py-1.5 bg-white rounded-full border border-[var(--border-subtle)]">
                     {f.note}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
+                <h3 className="text-base md:text-lg font-bold text-[var(--text-primary)] mb-2">
                   {f.label}
                 </h3>
-                <p className="text-[0.95rem] text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--text-primary)] transition-colors">
+                <p className="text-[0.9rem] md:text-[0.95rem] text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--text-primary)] transition-colors">
                   {f.body}
                 </p>
               </motion.div>
@@ -524,7 +524,7 @@ export default function LandingPage() {
       <section
         id="pricing"
         aria-label="Pricing plans"
-        className="w-full flex flex-col justify-center snap-start bg-[var(--bg-secondary)] py-12 md:py-20 px-5 sm:px-8 md:px-14 lg:px-20 border-y border-[var(--border-subtle)]"
+        className="w-full flex flex-col justify-center snap-start bg-[var(--bg-secondary)] py-12 md:py-16 lg:py-20 px-4 sm:px-8 md:px-14 lg:px-20 border-y border-[var(--border-subtle)]"
       >
         <motion.div
           initial="initial"
@@ -533,7 +533,7 @@ export default function LandingPage() {
           variants={stagger}
           className="max-w-[1400px] mx-auto flex flex-col items-center"
         >
-          <div className="text-center mb-16 lg:mb-20">
+          <div className="text-center mb-12 lg:mb-20">
             <motion.div variants={fadeUp}>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-4">
                 Pricing
@@ -543,8 +543,9 @@ export default function LandingPage() {
             <motion.h2
               variants={fadeUp}
               style={{ fontFamily: "'Playfair Display', serif" }}
-              className="text-4xl md:text-5xl lg:text-[4rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1] mt-6"
+              className="text-3xl md:text-4xl lg:text-[4rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1] mt-4 md:mt-6"
             >
+
               100% Free.
               <br />
               <span className="italic">Forever.</span>
@@ -557,12 +558,12 @@ export default function LandingPage() {
               variants={fadeUp}
               whileHover={{ y: -5, rotateX: 1, rotateY: 1 }}
               style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
-              className="p-8 md:p-10 border bg-[var(--text-primary)] border-[var(--text-primary)] shadow-2xl flex flex-col relative overflow-hidden group w-full"
+              className="p-6 md:p-10 border bg-[var(--text-primary)] border-[var(--text-primary)] shadow-2xl flex flex-col relative overflow-hidden group w-full"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--accent)] opacity-10 blur-3xl pointer-events-none" />
 
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-white/10 text-[var(--accent)]">
-                <MessageSquare className="w-6 h-6" />
+              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6 bg-white/10 text-[var(--accent)]">
+                <MessageSquare className="w-5 md:w-6 h-5 md:h-6" />
               </div>
 
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3 text-[var(--accent)]">
@@ -570,47 +571,47 @@ export default function LandingPage() {
               </p>
               <h3
                 style={{ fontFamily: "'Playfair Display', serif" }}
-                className="text-xl md:text-2xl font-bold mb-3 italic leading-tight text-white"
+                className="text-lg md:text-2xl font-bold mb-3 italic leading-tight text-white"
               >
                 Everything you need
               </h3>
 
               <div className="w-full h-[1px] my-6 bg-white/10" />
 
-              <ul className="space-y-4 mb-8 flex-1 relative z-10">
-                {[
-                  "FAQ chatbot with knowledge base",
-                  "Basic agent handoff",
-                  "Dashboard & analytics",
-                  "Unanswered question tracking",
-                  "Community support",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-3 text-[0.9rem] text-white/80">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
+<ul className="space-y-3 md:space-y-4 mb-8 flex-1 relative z-10">
+                  {[
+                    "FAQ chatbot with knowledge base",
+                    "Basic agent handoff",
+                    "Dashboard & analytics",
+                    "Unanswered question tracking",
+                    "Community support",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-3 text-[0.85rem] md:text-[0.9rem] text-white/80">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
 
-              <Link href="/auth/login" className="mt-auto block">
-                <button className="w-full py-3.5 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2 group border bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20 cursor-pointer">
-                  Get Started
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </button>
-              </Link>
+                <Link href="/auth/login" className="mt-auto block">
+                  <button className="w-full py-3 md:py-3.5 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2 group border bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20 cursor-pointer">
+                    Get Started
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </Link>
             </motion.div>
 
-            {/* Enterprise Plan */}
+{/* Enterprise Plan */}
             <motion.div
               variants={fadeUp}
               whileHover={{ y: -5, rotateX: 1, rotateY: 1 }}
               style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
-              className="p-8 md:p-10 border bg-white border-[var(--border-default)] shadow-xl flex flex-col relative overflow-hidden group w-full hover:border-[var(--accent)]/30 transition-all"
+              className="p-6 md:p-10 border bg-white border-[var(--border-default)] shadow-xl flex flex-col relative overflow-hidden group w-full hover:border-[var(--accent)]/30 transition-all"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--accent)] opacity-5 blur-3xl pointer-events-none" />
 
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-[var(--accent-glow)] text-[var(--accent)]">
-                <ShieldCheck className="w-6 h-6" />
+              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6 bg-white text-[var(--accent)]">
+                <ShieldCheck className="w-5 md:w-6 h-5 md:h-6" />
               </div>
 
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3 text-[var(--accent)]">
@@ -618,14 +619,15 @@ export default function LandingPage() {
               </p>
               <h3
                 style={{ fontFamily: "'Playfair Display', serif" }}
-                className="text-xl md:text-2xl font-bold mb-3 italic leading-tight text-[var(--text-primary)]"
+                className="text-lg md:text-2xl font-bold mb-3 italic leading-tight text-[var(--text-primary)]"
               >
+
                 Custom solutions
               </h3>
 
-              <div className="w-full h-[1px] my-6 bg-[var(--border-subtle)]" />
+              <div className="w-full h-[1px] my-5 md:my-6 bg-[var(--border-subtle)]" />
 
-              <ul className="space-y-4 mb-8 flex-1 relative z-10">
+              <ul className="space-y-3 md:space-y-4 mb-8 flex-1 relative z-10">
                 {[
                   "Return processing automations",
                   "Custom AI persona & tone",
@@ -633,7 +635,7 @@ export default function LandingPage() {
                   "SLA & priority support",
                   "Advanced security & compliance",
                 ].map((f) => (
-                  <li key={f} className="flex items-start gap-3 text-[0.9rem] text-[var(--text-secondary)]">
+                  <li key={f} className="flex items-start gap-3 text-[0.85rem] md:text-[0.9rem] text-[var(--text-secondary)]">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 shadow-sm" />
                     {f}
                   </li>
@@ -658,7 +660,7 @@ export default function LandingPage() {
       {/* ── CTA ── */}
       <section
         aria-label="Get started today"
-        className="bg-[var(--accent)] min-h-[100dvh] flex flex-col justify-center snap-start py-24 md:py-32 px-5 sm:px-8 md:px-14 lg:px-20 w-full overflow-hidden"
+        className="bg-[var(--accent)] min-h-auto md:min-h-[100dvh] flex flex-col justify-center snap-start py-16 md:py-24 lg:py-32 px-4 sm:px-8 md:px-14 lg:px-20 w-full overflow-hidden"
       >
         <motion.div
           initial="initial"
@@ -668,29 +670,29 @@ export default function LandingPage() {
           className="max-w-[1400px] w-full mx-auto flex flex-col md:flex-row items-center md:items-start justify-between gap-12"
         >
           <motion.div variants={fadeUp} className="text-center md:text-left">
-            <p className="text-[var(--accent-warm)] text-[11px] font-bold uppercase tracking-[0.25em] mb-6">
+            <p className="text-white text-[11px] font-bold uppercase tracking-[0.25em] mb-4 md:mb-6">
               Ready to automate?
             </p>
             <h2
               style={{ fontFamily: "'Playfair Display', serif" }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight max-w-3xl"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white leading-tight max-w-3xl"
             >
               Start automating.
-              <br />
+              <br className="hidden sm:block" />
               <span className="italic">100% Free.</span>
             </h2>
-            <p className="text-white/80 mt-6 md:mt-8 text-base md:text-lg max-w-md mx-auto md:mx-0 leading-relaxed font-medium">
+            <p className="text-white/80 mt-4 md:mt-6 lg:mt-8 text-sm md:text-base lg:text-lg max-w-md mx-auto md:mx-0 leading-relaxed font-medium">
               Ryoku provides a robust FAQ platform with agent handoff capabilities, completely free of charge. No credit card required.
             </p>
           </motion.div>
           <motion.div
             variants={fadeUp}
-            className="shrink-0 flex items-center w-full md:w-auto mt-4 md:mt-16"
+            className="shrink-0 flex items-center w-full md:w-auto mt-6 md:mt-16"
           >
             <Link href="/auth/login" className="w-full">
-              <button className="group bg-white text-[var(--accent)] hover:bg-[var(--text-primary)] hover:text-white transition-all duration-300 shadow-xl shadow-black/10 px-10 py-5 sm:py-6 w-full font-bold text-[0.95rem] tracking-wide uppercase flex items-center justify-center gap-4 border border-transparent hover:border-[var(--text-primary)]">
+              <button className="group bg-white text-[var(--accent)] hover:bg-[var(--text-primary)] hover:text-white transition-all duration-300 shadow-xl shadow-black/10 px-8 py-4 md:py-5 w-full font-bold text-[0.9rem] md:text-[0.95rem] tracking-wide uppercase flex items-center justify-center gap-3 border border-transparent hover:border-[var(--text-primary)]">
                 Get Started Free
-                <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                <ArrowUpRight className="w-4 md:w-5 h-4 md:h-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </button>
             </Link>
           </motion.div>
@@ -703,13 +705,13 @@ export default function LandingPage() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
-        className="py-12 md:py-16 px-5 sm:px-8 md:px-14 lg:px-20 bg-[var(--bg-dark)] w-full border-t border-white/10"
+        className="py-10 md:py-16 px-4 sm:px-8 md:px-14 lg:px-20 bg-[var(--bg-dark)] w-full border-t border-white/10"
       >
-        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-8">
+        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 md:gap-8">
           <div className="flex items-center gap-3">
             <span
               style={{ fontFamily: "'Playfair Display', serif" }}
-              className="text-xl font-black text-white tracking-tight"
+              className="text-lg md:text-xl font-black text-white tracking-tight"
             >
               Ryoku
             </span>
@@ -717,7 +719,7 @@ export default function LandingPage() {
               / agent
             </span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
             {[
               ["/#features", "Capabilities"],
               ["/#pricing", "Pricing"],

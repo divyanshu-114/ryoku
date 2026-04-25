@@ -36,7 +36,7 @@ interface ConvoDetail {
 const SENTIMENT_BADGE: Record<string, { label: string; color: string }> = {
     positive: { label: "😊 Positive", color: "var(--success)" },
     neutral: { label: "😐 Neutral", color: "var(--accent)" },
-    negative: { label: "😟 Negative", color: "#f59e0b" },
+    negative: { label: "😟 Negative", color: "var(--accent-light)" },
     frustrated: { label: "😡 Frustrated", color: "var(--danger)" },
 };
 
@@ -90,7 +90,6 @@ export default function ConversationDetailPage() {
 
     return (
         <main className="min-h-screen px-4 py-24 md:py-20 ambient-grid relative">
-            <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
             <div className="max-w-3xl mx-auto relative z-10 space-y-6">
                 {/* Header */}
                 <div>
@@ -120,7 +119,7 @@ export default function ConversationDetailPage() {
                     </div>
                     {conversation.rating && (
                         <div className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-amber-400" />
+                            <Star className="w-3.5 h-3.5 text-[var(--accent)]" />
                             <span className="text-xs text-[var(--text-secondary)]">{conversation.rating}/5</span>
                         </div>
                     )}

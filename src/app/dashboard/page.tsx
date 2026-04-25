@@ -889,7 +889,6 @@ export default function DashboardPage() {
 
         return (
             <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
-                <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
                 <div className="max-w-6xl mx-auto w-full relative z-10 flex-1 overflow-y-auto pt-20 px-4 pb-10 space-y-8 scroll-smooth">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
@@ -912,9 +911,9 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Status Card */}
-                    <div className="glass-card p-8 glow-accent">
+                    <div className="glass-card p-8">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="glow-dot animate-pulse-glow" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[var(--success)]" />
                             <span className="text-sm font-semibold text-[var(--success)]">Bot Online</span>
                             <span className="text-xs text-[var(--text-muted)] ml-auto uppercase">{existingBusiness.type}</span>
                         </div>
@@ -939,7 +938,7 @@ export default function DashboardPage() {
                                 <TrendingUp className="w-4 h-4 text-[var(--accent)]" />
                                 <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Bot Health · Last 7 Days</span>
                             </div>
-                            <button onClick={() => router.push("/dashboard/analytics")} className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--accent-light)] transition cursor-pointer">
+                            <button onClick={() => router.push("/dashboard/analytics")} className="text-xs font-medium text-[var(--text-muted)] cursor-pointer">
                                 Full analytics →
                             </button>
                         </div>
@@ -1151,8 +1150,6 @@ const reader = response.body.getReader();
     // ── Onboarding Wizard ──
     return (
         <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
-            <div className="ambient-glow" style={{ top: "-100px", left: "-100px" }} />
-
             {/* Loading */}
             <AnimatePresence>
                 {loading && (

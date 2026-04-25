@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
     const sentimentColors: Record<string, string> = {
         positive: "var(--success)",
         neutral: "var(--accent)",
-        negative: "#f59e0b",
+        negative: "var(--accent-light)",
         frustrated: "var(--danger)",
     };
 
@@ -119,7 +119,6 @@ export default function AnalyticsPage() {
 
     return (
         <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
-            <div className="ambient-glow" style={{ top: "-100px", right: "-100px" }} />
             <div className="flex-1 overflow-y-auto pt-20 px-6 pb-20 scroll-smooth">
                 <div className="max-w-6xl mx-auto w-full relative z-10 pr-2 pb-10 space-y-8">
                 {/* Header */}
@@ -169,7 +168,7 @@ export default function AnalyticsPage() {
                         { label: "Conversations", value: stats?.totalConversations || 0, icon: MessageSquare, color: "var(--accent)" },
                         { label: "Messages", value: stats?.totalMessages || 0, icon: Activity, color: "var(--accent-light)" },
                         { label: "Resolved", value: stats?.resolvedCount || 0, icon: CheckCircle2, color: "var(--success)" },
-                        { label: "Avg. CSAT", value: stats?.avgRating ? `${stats.avgRating}/5` : "—", icon: Star, color: "#f59e0b" },
+                        { label: "Avg. CSAT", value: stats?.avgRating ? `${stats.avgRating}/5` : "—", icon: Star, color: "var(--accent)" },
                         { label: "Escalated", value: stats?.escalatedCount || 0, icon: AlertTriangle, color: "var(--danger)" },
                     ].map((stat, i) => (
                         <motion.div
