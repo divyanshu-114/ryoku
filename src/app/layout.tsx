@@ -4,7 +4,7 @@ import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Ryoku — Create Chatbots for Your Business at one Click",
+  title: "Ryoku | Customer Service ChatBots",
   description:
     "Create AI-powered customer service chatbots in minutes. Handle returns, orders, exchanges, and live agent escalation. Built for businesses of every size.",
   keywords: [
