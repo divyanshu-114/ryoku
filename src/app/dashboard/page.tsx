@@ -926,29 +926,29 @@ export default function DashboardPage() {
 
         return (
             <main className="h-[100dvh] ambient-grid relative overflow-hidden flex flex-col">
-                <div className="max-w-6xl mx-auto w-full relative z-10 flex-1 overflow-y-auto pt-20 px-4 pb-10 space-y-8 scroll-smooth">
+                <div className="max-w-5xl mx-auto w-full relative z-10 flex-1 overflow-y-auto pt-16 px-4 pb-10 space-y-6 scroll-smooth">
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-6" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <Bot className="w-4 h-4 text-[var(--accent)]" />
                                 <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Dashboard</span>
                             </div>
-                            <h1 className="text-3xl font-bold text-[var(--text-primary)]">{existingBusiness.name}</h1>
+                            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{existingBusiness.name}</h1>
                             <p className="text-sm text-[var(--text-secondary)] mt-1">Your AI customer service bot is live</p>
                         </div>
                         <div className="flex gap-3">
-                            <button onClick={() => setIsEditing(true)} className="btn-secondary text-xs py-2.5 px-5 flex items-center gap-2">
+                            <button onClick={() => setIsEditing(true)} className="btn-secondary text-xs py-2 px-4 flex items-center gap-2">
                                 <Settings className="w-3.5 h-3.5" /> Edit
                             </button>
-                            <button onClick={handleDelete} className="btn-secondary text-xs py-2.5 px-5 text-[var(--danger)]">
+                            <button onClick={handleDelete} className="btn-secondary text-xs py-2 px-4 text-[var(--danger)]">
                                 Delete
                             </button>
                         </div>
                     </div>
 
                     {/* Status Card */}
-                    <div className="glass-card p-8">
+                    <div className="p-6 rounded-2xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-2.5 h-2.5 rounded-full bg-[var(--success)]" />
                             <span className="text-sm font-semibold text-[var(--success)]">Bot Online</span>
@@ -969,7 +969,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── Bot Health Card ── */}
-                    <div className="glass-card p-6 space-y-4">
+                    <div className="p-6 rounded-2xl space-y-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-[var(--accent)]" />
@@ -1002,15 +1002,20 @@ export default function DashboardPage() {
                     {/* Navigation Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
-                            { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", desc: "Performance & CSAT", free: true },
-                            { href: "/dashboard/agent", icon: Headphones, label: "Agent Workspace", desc: "Live chat & handoff", free: true },
-                        ].filter(item => item.free || (existingBusiness?.planName?.toLowerCase() === "paid")).map(({ href, icon: Icon, label, desc }) => (
+                            { href: "/dashboard/agent", icon: Headphones, label: "Agent Workspace", desc: "Live chat & handoff", free: true, accent: true },
+                            { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", desc: "Performance & CSAT", free: true, accent: false },
+                        ].filter(item => item.free || (existingBusiness?.planName?.toLowerCase() === "paid")).map(({ href, icon: Icon, label, desc, accent }) => (
                             <button
                                 key={href}
                                 onClick={() => router.push(href)}
-                                className="glass-card p-4 flex items-center gap-3 text-left border border-[var(--border-subtle)] cursor-pointer"
+                                className={`p-4 flex items-center gap-3 text-left cursor-pointer transition-all rounded-2xl ${
+                                    accent 
+                                        ? "border-2 border-[var(--accent)] bg-[var(--accent)]/5 shadow-lg shadow-[var(--accent)]/10" 
+                                        : "rounded-2xl border border-[var(--border-subtle)]"
+                                }`}
+                                style={accent ? { boxShadow: "0 4px 20px -5px var(--accent)" } : {}}
                             >
-                                <Icon className="w-5 h-5 text-[var(--accent)] shrink-0" />
+                                <Icon className={`w-5 h-5 shrink-0 ${accent ? "text-[var(--accent)]" : "text-[var(--accent)]"}`} />
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-[var(--text-primary)]">{label}</p>
                                     <p className="text-[10px] text-[var(--text-muted)] truncate">{desc}</p>
@@ -1020,7 +1025,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* API Endpoint */}
-                    <div className="glass-card p-6 space-y-4">
+                    <div className="rounded-2xl p-6 space-y-4">
                         <div className="flex items-center gap-2">
                             <Key className="w-4 h-4 text-[var(--accent)]" />
                             <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Headless API</span>
@@ -1042,7 +1047,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* API Key Management */}
-                    <div className="glass-card p-6 space-y-5">
+                    <div className="rounded-2xl p-6 space-y-5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Key className="w-4 h-4 text-[var(--accent)]" />
@@ -1111,7 +1116,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Code Snippets */}
-                    <div className="glass-card p-6 space-y-4">
+                    <div className="rounded-2xl p-6 space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Zap className="w-4 h-4 text-[var(--accent)]" />
                             <span className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">Integration Snippets</span>
@@ -1244,7 +1249,7 @@ const reader = response.body.getReader();
                     <motion.div
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="glass-card p-6 mb-6"
+                        className="rounded-2xl p-6 mb-6"
                         style={{ border: "1px solid rgba(99,102,241,0.4)", background: "rgba(99,102,241,0.06)" }}
                     >
                         <div className="flex items-center gap-2 mb-1">
@@ -1308,7 +1313,7 @@ const reader = response.body.getReader();
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.3 }}
-                        className="glass-card p-8 mb-8"
+                        className="rounded-2xl p-8 mb-8"
                     >
                         <h2 className="text-lg font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                             {(() => { const Icon = STEPS[step].icon; return <Icon className="w-5 h-5 text-[var(--accent)]" />; })()}

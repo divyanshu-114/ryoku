@@ -48,12 +48,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         async session({ session, token }) {
             if (token.sub && session.user) {
                 session.user.id = token.sub;
+                session.user.image = token.picture as string | undefined;
             }
             return session;
         },
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
             if (user) {
                 token.sub = user.id;
+            }
+            if (account?.provider === "google") {
+                token.picture = account.profile?.picture;
             }
             return token;
         },
