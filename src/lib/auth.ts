@@ -12,6 +12,17 @@ function requireEnv(name: string): string {
     return value;
 }
 
+const authUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL;
+if (!authUrl) {
+    console.error(
+        "NextAuth configuration error: AUTH_URL and NEXTAUTH_URL are both missing."
+    );
+    throw new Error(
+        "Missing required environment variable: AUTH_URL (or NEXTAUTH_URL for compatibility)."
+    );
+}
+process.env.AUTH_URL = authUrl;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: DrizzleAdapter(db, {
         usersTable: users,

@@ -148,6 +148,7 @@ For production, set:
 
 ```env
 AUTH_URL=https://your-production-domain.com
+# Some environments also use NEXTAUTH_URL; this app will fall back to it if AUTH_URL is missing.
 NEXT_PUBLIC_APP_URL=https://your-production-domain.com
 AUTH_TRUST_HOST=true
 ```
