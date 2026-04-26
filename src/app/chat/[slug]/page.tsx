@@ -34,7 +34,7 @@ export default function ChatPage() {
     const apiTarget = slug ? `/api/chat/${slug}` : "/api/chat/athena";
 
     // Setup useChat to hit our specific route
-    const { messages, status, error, reload, sendMessage } = useChat({
+    const { messages, status, error, regenerate, sendMessage } = useChat({
         id: conversationId,
         // @ts-expect-error api is incorrectly missing from UseChatOptions type in this version
         api: apiTarget,
@@ -42,7 +42,7 @@ export default function ChatPage() {
     });
 
     // Fallback to reload if regenerate is not available
-    const reloadChat = reload || (() => { });
+    const reloadChat = regenerate || (() => { });
     const isLoading = status === "submitted" || status === "streaming";
     const [localInput, setLocalInput] = useState("");
 
@@ -63,7 +63,7 @@ export default function ChatPage() {
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!localInput.trim() || isLoading) return;
-        sendMessage({ content: localInput });
+        sendMessage({ text: localInput });
         setLocalInput("");
     };
 
@@ -282,7 +282,7 @@ export default function ChatPage() {
                 body: JSON.stringify({ conversationId, slug, reason: "User explicitly requested human agent", email, phone }),
             });
             sendMessage({ 
-                content: "I would like to speak to a human agent, please." 
+                text: "I would like to speak to a human agent, please." 
             });
         } catch (err) {
             console.error("Escalation failed", err);
