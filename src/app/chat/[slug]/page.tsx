@@ -345,7 +345,9 @@ export default function ChatPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...offlineForm, slug }),
             });
-            if (!res.ok) throw new Error("Failed to send");
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.details || data.error || "Failed to send");
+            
             setContactSubmitted(true);
             setShowOfflineModal(false);
             // System message in chat
@@ -355,8 +357,8 @@ export default function ChatPage() {
                 content: "Your query has been sent to our team. We'll get back to you via email soon!",
                 createdAt: new Date().toISOString(),
             }]);
-        } catch {
-            setOfflineError("Failed to send message. Please try again.");
+        } catch (err: any) {
+            setOfflineError(err.message || "Failed to send message. Please try again.");
         } finally {
             setOfflineLoading(false);
         }
