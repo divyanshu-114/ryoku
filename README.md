@@ -1,136 +1,266 @@
-# Ryoku 🌌: The Intelligent Customer Support OS
+# Ryoku
 
-**Ryoku** is a production-grade, Agentic AI platform designed for modern businesses. It combines state-of-the-art AI automation with a high-performance human-in-the-loop workflow, enabling businesses to provide 24/7 support without sacrificing the human touch.
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-149eca)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)](https://www.typescriptlang.org/)
+[![Drizzle ORM](https://img.shields.io/badge/Drizzle-ORM-c5f74f)](https://orm.drizzle.team/)
 
-![Ryoku Banner](https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=2070&auto=format&fit=crop)
+Ryoku is an AI customer-support operating system for small and growing businesses. It lets a business create a branded support bot, ingest knowledge-base content, answer customers through an embeddable chat widget, hand off conversations to agents, and review analytics from a dashboard.
 
-## 🚀 Vision
-In an era where customer expectations are higher than ever, Ryoku serves as the "Operating System" for customer communication. We believe AI shouldn't just replace humans, but empower them by handling 80% of routine tasks while ensuring the remaining 20% are handled by agents with full context and zero friction.
+The project is a Next.js App Router application with Auth.js, Neon Postgres, Drizzle ORM, Upstash Redis rate limiting, Pusher realtime events, Groq chat models, Google embeddings, and Resend email.
 
----
+## Why Ryoku Is Useful
 
-## 🔥 Comprehensive Feature Set
+- **Fast business onboarding**: create a business profile, pick an industry, configure support policies, and generate starter FAQs.
+- **RAG-backed support**: upload or ingest documents and website content, embed them, and use them as support context.
+- **Embeddable chat widget**: add a single script tag to any website and point it at a business slug.
+- **Human handoff workflow**: customers can escalate to real agents, while agents get a queue and conversation context.
+- **Realtime collaboration**: Pusher powers live chat updates, typing events, handoffs, and agent status.
+- **Analytics and exports**: track chat volume, escalation rate, automation rate, knowledge gaps, and export conversation data.
+- **API access**: generate API keys and call a versioned chat endpoint for external integrations.
+- **Production deployment path**: Vercel config, cron scheduling, auth proxy protection, and environment templates are included.
 
-### 🤖 1. Agentic AI & RAG Engine
-*   **Vector-Powered Intelligence**: Uses `pgvector` and OpenAI/Gemini embeddings to search through billions of data points in milliseconds.
-*   **Context-Aware Responses**: AI doesn't just "chat"—it references your specific business documents, manuals, and FAQs.
-*   **Automatic FAQ Generation**: Scans your knowledge base and automatically generates helpful FAQ modules for your customers.
-*   **Web Ingestion (Scraping)**: Input a URL, and Ryoku will crawl and ingest the content into your AI's brain instantly.
+## Tech Stack
 
-### 🎧 2. Professional Agent Command Center
-*   **Unified Inbox**: Manage AI-driven and human-assigned conversations in a single, high-speed interface.
-*   **One-Click Takeover**: Seamlessly transition from AI to Human. The agent sees the entire AI interaction history, ensuring no customer has to repeat themselves.
-*   **Real-time Collaboration**: Powered by Pusher, agents get instant notifications for new handoffs and real-time typing indicators.
-*   **Canned Responses (Shortcuts)**: Build a library of pre-written replies accessible via `/` commands to maximize response speed.
-*   **Sentiment Monitoring**: Real-time sentiment analysis helps agents prioritize frustrated customers.
+| Area | Tools |
+| --- | --- |
+| App framework | Next.js 16, React 19, TypeScript |
+| Styling and UI | Tailwind CSS 4, Framer Motion, lucide-react |
+| Auth | Auth.js / NextAuth v5 beta, Google OAuth |
+| Database | Neon Postgres, Drizzle ORM, pgvector |
+| AI | Vercel AI SDK, Groq chat models, Google embedding models |
+| Realtime | Pusher Channels |
+| Cache and rate limiting | Upstash Redis |
+| Email | Resend |
+| Deployment | Vercel |
 
-### 📊 3. Analytics & Business Intelligence
-*   **Performance Metrics**: Track First Response Time (FRT), AI Automation Rate, and CSAT (Customer Satisfaction) scores.
-*   **Daily/Weekly Digests**: Automated summaries of business performance sent directly to stakeholders.
-*   **Customer Data Export**: Export contact lists (names, emails, and phone numbers) for targeted marketing or deep-dive CRM reporting.
+## Project Structure
 
-### 🔌 4. Deployment & Integration
-*   **Embeddable Widget**: A sleek, customizable chat widget that can be installed on any website with a simple `<script>` tag.
-*   **Custom Branding**: Customize accent colors, welcome messages, and bot names to match your brand identity.
-*   **Multi-Platform Support**: Optimized for desktop browsers and mobile devices.
+```text
+src/app/                 Next.js App Router pages and API routes
+src/app/api/             Chat, auth, analytics, ingest, widget, agent, and key APIs
+src/components/          Shared client components
+src/lib/                 Auth, AI, database, realtime, billing, tools, and utilities
+src/lib/db/schema.ts     Drizzle schema for users, businesses, documents, chats, agents
+public/widget.js         Embeddable website chat widget
+drizzle/                 Generated SQL migrations and metadata
+scripts/                 Database migration and seed helpers
+src/proxy.ts             Dashboard auth gate for Next.js proxy/middleware
+```
 
----
+## Prerequisites
 
-## 🛠 Technical Architecture
+- Node.js 20 or newer
+- npm
+- A PostgreSQL database with the `pgvector` extension available
+- Google OAuth client credentials
+- Upstash Redis REST URL and token
+- Groq API key
+- Google AI API keys for embeddings
+- Pusher Channels app credentials
+- Resend API key for contact and digest emails
 
-Ryoku is built with a cutting-edge stack for performance, reliability, and scale:
+## Getting Started
 
-### Frontend
-*   **Next.js 15+ (App Router)**: Utilizing Server Components and modern routing.
-*   **Framer Motion**: Smooth, glassmorphic UI transitions and micro-animations.
-*   **Tailwind CSS**: Utility-first styling for a clean, responsive design.
+Clone the repository and install dependencies:
 
-### Backend & AI
-*   **Vercel AI SDK**: Robust orchestration for LLM calls and tool-calling.
-*   **Neon Postgres**: Serverless Postgres for high-availability data storage.
-*   **Drizzle ORM**: Type-safe database interactions with high performance.
-*   **Pusher**: Low-latency WebSocket signaling for real-time messaging.
+```bash
+git clone https://github.com/Trishix/ryoku.git
+cd ryoku
+npm install
+```
 
-### Database Schema Highlights
-*   **Conversations**: Tracks status (AI, Active, Resolved), assigned agents, and metadata.
-*   **Messages**: Stores role (user, assistant, agent), content, and sentiment scores.
-*   **Knowledge Base**: Stores chunks of text and their corresponding vector embeddings.
+Create a local environment file:
 
----
+```bash
+cp .env.example .env
+```
 
-## 🚀 Getting Started
+Fill in the required variables:
 
-### Prerequisites
-*   Node.js 20+
-*   PostgreSQL with `pgvector` extension (Neon recommended)
-*   Pusher account (Channels)
-*   OpenAI or Google Gemini API Key
+```env
+# Neon Postgres
+DATABASE_URL=postgresql://user:password@host.neon.tech/ryoku?sslmode=require
 
-### Detailed Installation
+# Auth.js
+AUTH_URL=http://localhost:3000
+AUTH_SECRET=generate-with-openssl-rand-base64-32
+AUTH_TRUST_HOST=true
+AUTH_GOOGLE_ID=your-google-client-id
+AUTH_GOOGLE_SECRET=your-google-client-secret
 
-1.  **Clone & Install**:
-    ```bash
-    git clone https://github.com/your-repo/ryoku.git
-    cd ryoku
-    npm install
-    ```
+# Upstash Redis
+UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-redis-token
 
-2.  **Environment Setup**:
-    Copy `.env.example` to `.env` and fill in:
-    ```env
-    # Database
-    DATABASE_URL=postgresql://...
+# Groq chat models
+GROQ_API_KEY=your-groq-api-key
 
-    # Auth.js
-    AUTH_SECRET=...
-    AUTH_TRUST_HOST=true
-    AUTH_GOOGLE_ID=...
-    AUTH_GOOGLE_SECRET=...
+# Google AI embeddings
+FREE_API_KEY_1=your-google-ai-key-1
+FREE_API_KEY_2=your-google-ai-key-2
+FREE_API_KEY_3=your-google-ai-key-3
 
-    # Real-time (Pusher)
-    PUSHER_APP_ID=...
-    NEXT_PUBLIC_PUSHER_KEY=...
-    PUSHER_SECRET=...
-    NEXT_PUBLIC_PUSHER_CLUSTER=...
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-    # Redis (Upstash)
-    UPSTASH_REDIS_REST_URL=...
-    UPSTASH_REDIS_REST_TOKEN=...
+# Pusher realtime
+PUSHER_APP_ID=your-pusher-app-id
+NEXT_PUBLIC_PUSHER_KEY=your-pusher-key
+PUSHER_SECRET=your-pusher-secret
+NEXT_PUBLIC_PUSHER_CLUSTER=us2
 
-    # AI
-    GROQ_API_KEY=...
-    FREE_API_KEY_1=...
-    FREE_API_KEY_2=...
-    FREE_API_KEY_3=...
+# Resend email
+RESEND_API_KEY=re_your-resend-api-key
+RESEND_EMAIL=ryoku@resend.dev
+SUPPORT_EMAIL=support@example.com
 
-    # App
-    NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Vercel cron protection
+CRON_SECRET=generate-a-random-secret
+```
 
-    # Optional integrations
-    RESEND_API_KEY=...
-    CRON_SECRET=...
-    ```
+Push the database schema:
 
-3.  **Database Migration**:
-    ```bash
-    npx drizzle-kit push
-    ```
+```bash
+npx drizzle-kit push
+```
 
-4.  **Launch**:
-    ```bash
-    npm run dev
-    ```
+Run the development server:
 
-5.  **Weekly Digest Cron (Vercel)**:
-    `vercel.json` schedules `/api/digest` weekly. Set `CRON_SECRET` in production so only Vercel cron can trigger it.
+```bash
+npm run dev
+```
 
----
+Open `http://localhost:3000`, sign in with Google, and complete the dashboard onboarding flow.
 
-## 🛡 Security & Compliance
-*   **Input Sanitization**: Advanced prompt-guard to prevent injection attacks.
-*   **Role-Based Access**: Strict separation between business owners, agents, and customers.
-*   **Data Privacy**: All communications are encrypted in transit and at rest.
+## Google OAuth Setup
 
----
+In Google Cloud Console, create an OAuth 2.0 client and add these redirect URIs:
 
-Developed with a focus on **Efficiency**, **Experience**, and **Intelligence**. Join the future of customer support with **Ryoku**.
+```text
+http://localhost:3000/api/auth/callback/google
+https://your-production-domain.com/api/auth/callback/google
+```
+
+For production, set:
+
+```env
+AUTH_URL=https://your-production-domain.com
+NEXT_PUBLIC_APP_URL=https://your-production-domain.com
+AUTH_TRUST_HOST=true
+```
+
+If Google reports `redirect_uri_mismatch`, the redirect URI in Google Cloud does not match the `AUTH_URL` used by the deployed app.
+
+## Common Commands
+
+```bash
+npm run dev       # Start local development
+npm run build     # Build production bundle with webpack
+npm run start     # Start the production server
+npm run lint      # Run ESLint
+npx drizzle-kit push  # Apply schema changes to the database
+```
+
+## Using the Chat Widget
+
+After creating a business in the dashboard, copy its slug and embed `public/widget.js` from your deployed app:
+
+```html
+<script
+  src="https://your-production-domain.com/widget.js"
+  data-slug="your-business-slug"
+  data-position="bottom-right"
+  data-theme="dark"
+  data-color="#6366f1">
+</script>
+```
+
+The widget loads `/chat/{slug}?embed=1` in an iframe and uses `/api/widget/{slug}` for public widget configuration.
+
+## Calling the Chat API
+
+Generate an API key from the dashboard, then call the versioned chat endpoint:
+
+```bash
+curl -X POST "https://your-production-domain.com/api/v1/chat/your-business-slug" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer rk_live_your_key" \
+  -d '{
+    "messages": [
+      { "role": "user", "content": "What is your return policy?" }
+    ]
+  }'
+```
+
+The browser chat UI uses `/api/chat/{slug}`. External integrations should prefer `/api/v1/chat/{slug}`.
+
+## Deployment
+
+The repository includes `vercel.json` with:
+
+- `npm install --include=dev`
+- `npm run build`
+- a weekly `/api/digest` cron schedule
+
+Before deploying, configure all required environment variables in Vercel. At minimum, production needs:
+
+- `DATABASE_URL`
+- `AUTH_URL`
+- `AUTH_SECRET`
+- `AUTH_TRUST_HOST`
+- `AUTH_GOOGLE_ID`
+- `AUTH_GOOGLE_SECRET`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `GROQ_API_KEY`
+- `FREE_API_KEY_1`
+- `NEXT_PUBLIC_APP_URL`
+- `PUSHER_APP_ID`
+- `NEXT_PUBLIC_PUSHER_KEY`
+- `PUSHER_SECRET`
+- `NEXT_PUBLIC_PUSHER_CLUSTER`
+- `RESEND_API_KEY`
+- `SUPPORT_EMAIL`
+- `CRON_SECRET`
+
+Run these checks before pushing a deployment:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Database Notes
+
+The schema lives in `src/lib/db/schema.ts`. Core tables include:
+
+- Auth tables: `users`, `accounts`, `sessions`, `verification_tokens`
+- Business setup: `businesses`, `documents`, `api_keys`, `widget_configs`
+- Chat: `conversations`, `messages`
+- Operations: `analytics_events`, `knowledge_gaps`, `agents`, `canned_responses`, `push_subscriptions`
+
+Document embeddings use a `vector(3072)` column, so the target Postgres database must support pgvector.
+
+## Support
+
+For help with setup or bugs:
+
+- Check this README first, especially the environment and OAuth sections.
+- Review the relevant route or module under `src/app/api/` and `src/lib/`.
+- Open an issue in the GitHub repository with reproduction steps, expected behavior, actual behavior, and relevant logs.
+
+Avoid posting real API keys, OAuth secrets, database URLs, or customer data in issues.
+
+## Maintainers and Contributing
+
+Ryoku is maintained by the repository owner at `Trishix/ryoku`.
+
+Contribution flow:
+
+1. Create a branch from `main`.
+2. Keep changes focused and small enough to review.
+3. Run `npm run lint` and `npm run build`.
+4. Open a pull request with a clear summary, screenshots for UI changes, and notes about any schema or environment changes.
+
+There is not yet a separate `CONTRIBUTING.md` or `LICENSE` file in this repository. Add those before accepting broad external contributions or publishing this as an open-source package.
