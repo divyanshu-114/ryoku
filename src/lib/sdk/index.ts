@@ -13,11 +13,12 @@ export class RyokuChat {
         
         if (typeof window !== "undefined" && this.config.pusherKey) {
             try {
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 const Pusher = require("pusher-js");
                 this.pusher = new Pusher(this.config.pusherKey, {
                     cluster: this.config.pusherCluster || "us2",
                     authEndpoint: `${this.baseUrl}/api/pusher/auth`,
-                });
+                };
             } catch (e) {
                 console.warn("Pusher not available");
             }

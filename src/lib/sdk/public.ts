@@ -1,4 +1,5 @@
 export { RyokuChat } from "./index";
+export { RyokuChat as RyokuSDK } from "./index";
 export type { 
     Message, 
     Session, 

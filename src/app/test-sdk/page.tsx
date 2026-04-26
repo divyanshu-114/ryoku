@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { RyokuSDK } from "@/lib/sdk/public";
 
 export default function TestSDKPage() {
@@ -8,10 +8,15 @@ export default function TestSDKPage() {
     const [input, setInput] = useState("");
     const [status, setStatus] = useState("Idle");
     const [error, setError] = useState("");
+    const sdkRef = useRef<RyokuSDK | null>(null);
 
-    const sdk = new RyokuSDK();
+    useEffect(() => {
+        sdkRef.current = new RyokuSDK();
+    }, []);
 
     const handleChat = async () => {
+        if (!sdkRef.current) return;
+        
         setStatus("Streaming...");
         setError("");
         
@@ -20,7 +25,7 @@ export default function TestSDKPage() {
         setInput("");
 
         try {
-            await sdk.chat({
+            await sdkRef.current.chat({
                 slug: "athena",
                 messages: newMessages as any,
                 onMessage: (delta) => {
@@ -49,10 +54,12 @@ export default function TestSDKPage() {
     };
 
     const handleOffline = async () => {
+        if (!sdkRef.current) return;
+        
         setStatus("Sending Offline...");
         setError("");
         try {
-            const res = await sdk.sendOfflineQuery({
+            const res = await sdkRef.current.sendOfflineQuery({
                 slug: "athena",
                 name: "SDK Tester",
                 email: "trishitofficial@gmail.com",
