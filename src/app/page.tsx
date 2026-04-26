@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { motion, type Variants } from "framer-motion";
-import { ArrowUpRight, ArrowRight, ShieldCheck, Zap, Globe, MessageSquare, BarChart3, RefreshCcw, Box } from "lucide-react";
+import { ArrowUpRight, ArrowRight, ShieldCheck, Zap, Globe, MessageSquare, BarChart3, RefreshCcw, Box, LayoutDashboard } from "lucide-react";
 import { ContactDialog } from "@/components/ContactDialog";
 
 // ── Components ──
@@ -122,6 +123,7 @@ const AmbientAgentActivity = () => {
 
 export default function LandingPage() {
 
+  const { data: session } = useSession();
   const [showContactDialog, setShowContactDialog] = useState(false);
 
   useEffect(() => {
@@ -196,10 +198,14 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Link href="/auth/login" className="w-full sm:w-auto">
+              <Link href={session ? "/dashboard" : "/auth/login"} className="w-full sm:w-auto">
                 <button className="group relative w-full inline-flex items-center justify-center gap-3 bg-[var(--text-primary)] text-white px-10 py-5 font-bold text-sm tracking-widest uppercase transition-all hover:bg-[var(--accent)] shadow-2xl shadow-indigo-500/10 hover:shadow-indigo-500/20 min-h-[60px]">
-                  Start for free
-                  <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  {session ? "Go to dashboard" : "Start for free"}
+                  {session ? (
+                    <LayoutDashboard className="w-4 h-4 transition-transform group-hover:scale-110" />
+                  ) : (
+                    <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  )}
                 </button>
               </Link>
               <Link href="#how-it-works" className="w-full sm:w-auto">
@@ -590,10 +596,14 @@ export default function LandingPage() {
                   ))}
                 </ul>
 
-                <Link href="/auth/login" className="mt-auto block">
+                <Link href={session ? "/dashboard" : "/auth/login"} className="mt-auto block">
                   <button className="w-full py-3 md:py-3.5 text-sm font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2 group border bg-[var(--accent)] border-[var(--accent)] text-white hover:brightness-110 shadow-lg shadow-[var(--accent)]/20 cursor-pointer">
-                    Get Started
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    {session ? "Dashboard" : "Get Started"}
+                    {session ? (
+                      <LayoutDashboard className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    ) : (
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    )}
                   </button>
                 </Link>
             </motion.div>
@@ -686,10 +696,14 @@ export default function LandingPage() {
             variants={fadeUp}
             className="shrink-0 flex items-center w-full md:w-auto mt-6 md:mt-16"
           >
-            <Link href="/auth/login" className="w-full">
+            <Link href={session ? "/dashboard" : "/auth/login"} className="w-full">
               <button className="group bg-white text-[var(--accent)] hover:bg-[var(--text-primary)] hover:text-white transition-all duration-300 shadow-xl shadow-black/10 px-8 py-4 md:py-5 w-full font-bold text-[0.9rem] md:text-[0.95rem] tracking-wide uppercase flex items-center justify-center gap-3 border border-transparent hover:border-[var(--text-primary)]">
-                Get Started Free
-                <ArrowUpRight className="w-4 md:w-5 h-4 md:h-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                {session ? "Go to Dashboard" : "Get Started Free"}
+                {session ? (
+                  <LayoutDashboard className="w-4 md:w-5 h-4 md:h-5 transition-transform group-hover:scale-110" />
+                ) : (
+                  <ArrowUpRight className="w-4 md:w-5 h-4 md:h-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                )}
               </button>
             </Link>
           </motion.div>
@@ -718,10 +732,9 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
             {[
-              ["/#features", "Capabilities"],
-              ["/#pricing", "Pricing"],
+              ["/dashboard", "Dashboard"],
               ["/auth/login", "Sign In"],
-            ].map(([href, label]) => (
+            ].filter(([href]) => session ? (href === "/dashboard") : (href === "/auth/login" || true)).map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
