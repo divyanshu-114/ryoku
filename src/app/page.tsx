@@ -549,9 +549,9 @@ export default function LandingPage() {
               className="text-3xl md:text-4xl lg:text-[4rem] font-black text-[var(--text-primary)] leading-tight lg:leading-[1.1] mt-4 md:mt-6"
             >
 
-              100% Free.
+              Free core.
               <br />
-              <span className="italic">Forever.</span>
+              <span className="italic">Enterprise scale.</span>
             </motion.h2>
           </div>
 
@@ -686,7 +686,7 @@ export default function LandingPage() {
             >
               Start automating.
               <br className="hidden sm:block" />
-              <span className="italic">100% Free.</span>
+              <span className="italic">Free core. Enterprise scale.</span>
             </h2>
             <p className="text-white/80 mt-4 md:mt-6 lg:mt-8 text-sm md:text-base lg:text-lg max-w-md mx-auto md:mx-0 leading-relaxed font-medium">
               Ryoku provides a robust FAQ platform with agent handoff capabilities, completely free of charge. No credit card required.
