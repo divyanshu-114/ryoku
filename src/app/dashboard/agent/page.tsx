@@ -577,41 +577,45 @@ export default function AgentDashboardPage() {
                 {showDeleteConfirm && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="w-full max-w-md rounded-2xl p-8 relative overflow-hidden"
-                            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", boxShadow: "var(--shadow-2xl)" }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="w-full max-w-[360px] rounded-[24px] p-8 relative overflow-hidden"
+                            style={{ 
+                                background: "#FFFFFF", 
+                                border: "1px solid rgba(0, 0, 0, 0.05)", 
+                                boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 0, 0, 0.05)" 
+                            }}
                         >
-                            {/* Warning glow background */}
-                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/10 blur-[80px] rounded-full pointer-events-none" />
+                            {/* Decorative soft glow flare */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/[0.03] blur-[60px] rounded-full pointer-events-none" />
                             
-                            <div className="text-center">
-                                <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-6" style={{ border: "1px solid rgba(239,68,68,0.2)" }}>
-                                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                            <div className="text-center relative z-10">
+                                <div className="w-14 h-14 rounded-2xl bg-red-50/80 flex items-center justify-center mx-auto mb-5" style={{ border: "1px solid rgba(239,68,68,0.1)" }}>
+                                    <AlertTriangle className="w-7 h-7 text-red-500" />
                                 </div>
-                                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Delete Conversation?</h3>
-                                <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                                    You are about to permanently delete this conversation and all its history. <span className="text-red-400 font-medium">This action cannot be undone.</span>
+                                <h3 className="text-[20px] font-bold text-[#111827] mb-2 tracking-tight">Delete Conversation</h3>
+                                <p className="text-[14px] text-[#4B5563] mb-8 leading-relaxed px-2">
+                                    This will permanently remove the chat history. <span className="text-red-500 font-medium">This action cannot be undone.</span>
                                 </p>
                             </div>
 
-                            <div className="flex gap-3">
-                                <button 
-                                    onClick={() => setShowDeleteConfirm(false)}
-                                    className="flex-1 py-3 px-4 rounded-xl font-medium transition-all hover:bg-white/5"
-                                    style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
-                                >
-                                    Cancel
-                                </button>
+                            <div className="flex flex-col gap-3 relative z-10">
                                 <button 
                                     onClick={confirmDelete}
                                     disabled={deleting}
-                                    className="flex-1 py-3 px-4 rounded-xl font-bold transition-all bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                                    className="w-full py-3.5 px-4 rounded-xl font-bold transition-all bg-red-500 hover:bg-red-600 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-red-500/10 disabled:opacity-50"
                                     style={{ color: "white" }}
                                 >
                                     {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                     Delete Forever
+                                </button>
+                                <button 
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="w-full py-3 px-4 rounded-xl font-semibold transition-all hover:bg-gray-50 active:scale-[0.98]"
+                                    style={{ background: "transparent", color: "#6B7280" }}
+                                >
+                                    Keep Conversation
                                 </button>
                             </div>
                         </motion.div>
