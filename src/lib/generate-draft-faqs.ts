@@ -1,6 +1,5 @@
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import { withRetry } from "@/lib/ai-provider";
-import { z } from "zod";
 
 /**
  * Given scraped text + business type, generate draft FAQs.
@@ -13,21 +12,28 @@ export async function generateDraftFaqs(
     count: number = 10
 ): Promise<{ question: string; answer: string }[]> {
     try {
-        const { object } = await withRetry(async (ai, modelId) => {
-            return await generateObject({
+        const { text } = await withRetry(async (ai, modelId) => {
+            return await generateText({
                 model: ai.chat(modelId),
-                schema: z.object({
-                    faqs: z.array(z.object({
-                        question: z.string(),
-                        answer: z.string(),
-                    })).length(count),
-                }),
-                system: `You are an FAQ generator for "${businessName}" (${businessType}). Generate exactly ${count} JSON Q&A pairs based on the provided website text. Use [brackets] for missing info.`,
+                system: `You are an FAQ generator for "${businessName}" (${businessType}). 
+                Generate exactly ${count} Q&A pairs based on the provided website text. 
+                Use [brackets] for missing info.
+                
+                You MUST return ONLY a valid JSON object with the following structure:
+                {
+                  "faqs": [
+                    { "question": "...", "answer": "..." }
+                  ]
+                }
+                Do not include any other text, markdown formatting, or explanations.`,
                 prompt: `WEBSITE TEXT: ${scrapedContent.slice(0, 3000)}`,
             });
         });
 
-        return object.faqs;
+        // Clean the text in case the model included markdown blocks
+        const cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const object = JSON.parse(cleanText);
+        return object.faqs || [];
     } catch (err) {
         console.error("[GenerateDraftFAQs] error:", err);
         return [];

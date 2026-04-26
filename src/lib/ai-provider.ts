@@ -10,9 +10,6 @@ const groq = createGroq({
 export const MODELS = {
     GROQ_MODELS: [
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "gemma2-9b-it",
-        "llama3-70b-8192",
     ] as const,
 };
 

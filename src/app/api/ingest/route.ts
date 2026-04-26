@@ -113,10 +113,10 @@ export async function POST(req: Request) {
         businessHours: config.businessHours || "Not specified",
         escalationEmail: config.escalationEmail || "",
         websiteUrl: config.websiteUrl || "",
-        // Store all extra business-type-specific fields
+        // Store all extra business-type-specific fields including faqs
         ...Object.fromEntries(
             Object.entries(config).filter(([k]) =>
-                !["businessName", "businessType", "faqs", "faqFile", "accentColor",
+                !["businessName", "businessType", "faqFile", "accentColor",
                     "welcomeMessage", "personaName", "personality", "capabilities",
                     "businessHours", "escalationEmail",
                     "websiteUrl"].includes(k)

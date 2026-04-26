@@ -259,6 +259,20 @@ export default function DashboardPage() {
                 setExistingBusiness(data.business);
                 setSlug(data.business.slug);
                 setGeneratedLink(`${window.location.origin}/chat/${data.business.slug}`);
+                
+                // Map existing data to config state for editing
+                setConfig({
+                    businessName: data.business.name || "",
+                    businessType: data.business.type || "",
+                    websiteUrl: data.business.config?.websiteUrl || "",
+                    welcomeMessage: data.business.branding?.welcomeMessage || "Hi! How can I help you?",
+                    accentColor: data.business.branding?.accentColor || "#6366f1",
+                    faqs: data.business.config?.faqs || [{ question: "", answer: "" }],
+                    faqFile: null,
+                    businessHours: data.business.config?.businessHours || "Mon-Fri 9am-5pm",
+                    escalationEmail: data.business.config?.escalationEmail || "",
+                    ...data.business.config // Include any dynamic fields
+                });
             }
         } catch {
             // No existing business
