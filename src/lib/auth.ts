@@ -34,6 +34,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         Google({
             clientId: requireEnv("AUTH_GOOGLE_ID"),
             clientSecret: requireEnv("AUTH_GOOGLE_SECRET"),
+            // Disable PKCE for localhost to avoid cookie parsing issues on non-SSL
+            checks: ["state"],
         }),
     ],
     pages: {

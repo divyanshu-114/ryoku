@@ -1,4 +1,5 @@
-import { generateText } from "ai";
+import { generateText, generateObject } from "ai";
+import { z } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
@@ -36,7 +37,7 @@ async function fetchContext(businessId: string, query: string) {
             WHERE business_id = ${businessId}
             AND 1 - (embedding <=> ${JSON.stringify(embedding)}::vector) > 0.35
             ORDER BY embedding <=> ${JSON.stringify(embedding)}::vector
-            LIMIT 6`
+            LIMIT 3`
     );
 
     const rows = result.rows ?? [];
@@ -126,26 +127,19 @@ export async function POST(req: Request) {
         }
 
         const summary = await withRetry(async (ai, modelId) => {
-            const { text } = await generateText({
+            const { object } = await generateObject({
                 model: ai.chat(modelId),
-                maxRetries: 0,
+                schema: z.object({
+                    summary: z.string(),
+                    keyPoints: z.array(z.string()),
+                    actionItems: z.array(z.string()),
+                    risks: z.array(z.string()),
+                }),
                 prompt: `${ANTI_INJECTION_PREAMBLE}
-You are a document analysis assistant for ${businessName}.
-
-Return strict JSON only with this shape:
-{
-  "summary": "string",
-  "keyPoints": ["string"],
-  "actionItems": ["string"],
-  "risks": ["string"]
-}
-
-Document:
-<user_input>
-${documentText.slice(0, 7000)}
-</user_input>`,
+Summarise this doc for ${businessName}.
+Doc: ${documentText.slice(0, 5000)}`,
             });
-            return text;
+            return object;
         });
 
         return NextResponse.json({ flowId, result: summary });
@@ -169,18 +163,10 @@ ${documentText.slice(0, 7000)}
                 model: ai.chat(modelId),
                 maxRetries: 0,
                 prompt: `${ANTI_INJECTION_PREAMBLE}
-Create a concise research brief for ${businessName}.
-
-Topic: <user_input>${topic}</user_input>
-Known business context:
-${safeContext || "<business_context>\nNo internal context available.\n</business_context>"}
-
-Output sections in markdown:
-1) Overview
-2) Insights
-3) Opportunities
-4) Risks
-5) Recommended Next Steps`,
+Create concise markdown research brief for ${businessName}.
+Topic: ${topic}
+Context: ${safeContext || "None"}
+Include: Overview, Insights, Opportunities, Risks, Next Steps.`,
             });
             return text;
         });

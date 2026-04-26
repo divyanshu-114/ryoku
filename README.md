@@ -13,12 +13,17 @@ Live demo: https://ryoku-iota.vercel.app
 
 ## Why Ryoku Is Useful
 
-- **Fast business onboarding**: create a business profile, pick an industry, configure support policies, and generate starter FAQs.
+- **Fast business onboarding**: create a business profile, pick an industry, configure support policies, and generate starter FAQs. AI-powered FAQ generation reads your website and drafts 10 Q&As instantly, with options to generate more on demand.
 - **RAG-backed support**: upload or ingest documents and website content, embed them, and use them as support context.
 - **Embeddable chat widget**: add a single script tag to any website and point it at a business slug.
 - **Human handoff workflow**: customers can escalate to real agents, while agents get a queue and conversation context.
 - **Realtime collaboration**: Pusher powers live chat updates, typing events, handoffs, and agent status.
 - **Analytics and exports**: track chat volume, escalation rate, automation rate, knowledge gaps, and export conversation data.
+- **AI Token Optimization**: Built-in hard limits for production efficiency:
+    - **Message Cap**: 1,000 characters per message.
+    - **Context Cap**: 4,000 characters of RAG knowledge per turn.
+    - **History Cap**: 12 most recent turns (6 back-and-forth) to minimize context window costs.
+    - **Structured Output**: Uses `generateObject` for deterministic, token-efficient JSON generation.
 - **API access**: generate API keys and call a versioned chat endpoint for external integrations.
 - **Production deployment path**: Vercel config, cron scheduling, auth proxy protection, and environment templates are included.
 

@@ -24,7 +24,7 @@ export async function handleChatPOST(
     try {
         const body = await req.json();
         const { messages, id: bodyId, conversationId: bodyConvId } = body;
-        
+
         // Use conversationId from body if available, else fallback to bodyId if it looks like a UUID
         const conversationId = bodyConvId || (bodyId?.includes("-") ? bodyId : null);
 
@@ -79,19 +79,19 @@ export async function handleChatPOST(
                     .from(conversations)
                     .where(eq(conversations.id, conversationId))
                     .limit(1);
-                    
+
                 if (existing.length === 0) {
                     await db.insert(conversations).values({
                         id: conversationId,
                         businessId: business.id,
                     });
-                    
+
                     await db.insert(analyticsEvents).values({
                         businessId: business.id,
                         event: "chat_started",
                         data: { conversationId },
                     });
-                    
+
                     await triggerNewConversation(business.id, {
                         id: conversationId,
                         customerName: "Anonymous",
@@ -170,7 +170,7 @@ export async function handleChatPOST(
                 WHERE business_id = ${business.id}
                 AND 1 - (embedding <=> ${JSON.stringify(queryEmbedding)}::vector) > 0.4
                 ORDER BY embedding <=> ${JSON.stringify(queryEmbedding)}::vector
-                LIMIT 8`
+                LIMIT 4`
                     );
                     if (results.rows?.length) {
                         topSimilarity = Number(results.rows[0]?.similarity ?? 0);
@@ -198,35 +198,20 @@ export async function handleChatPOST(
 
         // Build system prompt
         let systemPrompt = `${ANTI_INJECTION_PREAMBLE}
-You are ${persona.name || business.name + " Assistant"}, a customer service AI for ${business.name} (${business.type} business).
-
-PERSONALITY: ${persona.personality || "Professional, friendly, and helpful"}
-
-BUSINESS CONTEXT:
-${contextText ? contextText : "<business_context>\nNo specific context found.\n</business_context>"}
-
-CAPABILITIES: ${isPaid ? (persona.capabilities?.join(", ") || "Answer questions, help with orders and returns") : "Answer customer questions based on business context"}
-
-RULES:
-- Always be helpful, polite, and professional
-- Use the business context to give accurate answers
-- If you don't know something, say so and offer to connect with a human agent
-- Respond in the same language the customer uses
-- Keep responses concise but thorough
-- ${isPaid ? "You can help with orders and returns using the provided tools." : "You are an FAQ-only bot. You CANNOT look up orders or process returns. If the user asks about these, politely explain that they should contact support directly."}
-- Direct return requests and order queries to a human agent
-- If confidence is low OR the user seems frustrated, proactively offer to transfer to a human agent via the "Real Agent" button at the top of the chat
-- Business hours: ${config.businessHours || "Not specified"}
-- For urgent issues, suggest emailing: ${config.escalationEmail || "support team"}
-
-REAL-TIME SIGNALS:
-- retrievalTopSimilarity=${topSimilarity.toFixed(2)} (threshold ${autoHandoffThreshold.toFixed(2)})
-- userSentiment=${userSentiment}
-
-Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
+You are ${persona.name || business.name + " Assistant"} for ${business.name} (${business.type}).
+Personality: ${persona.personality || "Helpful and professional"}.
+Context: ${contextText || "None"}.
+Capabilities: ${isPaid ? (persona.capabilities?.join(", ") || "Support, orders, returns") : "FAQ only"}.
+Rules:
+- Use context for accuracy.
+- If unknown, offer human agent.
+- Concise, polite responses.
+- ${isPaid ? "Use tools for orders/returns." : "FAQ only; no order/return processing."}
+- Proactively offer human handoff if user is frustrated.
+- Hours: ${config.businessHours || "Standard"}; Email: ${config.escalationEmail || "Support"}.`;
 
         if (!isPaid) {
-            systemPrompt += "\n\nCRITICAL: You are on a FREE plan. You must strictly act as an FAQ bot. Do NOT attempt to help with orders, returns, or internal database queries as those features are disabled.";
+            systemPrompt += "\nFree plan: FAQ ONLY. No order/return/database help.";
         }
 
         // Stream response with tool calling
@@ -283,7 +268,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                 tools: {
                     ...(isPaid ? {
                         lookupOrder: tool({
-                            description: "Look up order status by order ID or customer email",
+                            description: "Order status by ID or email",
                             parameters: z.object({
                                 orderId: z.string().optional().describe("The order ID"),
                                 email: z.string().optional().describe("Customer email"),
@@ -307,7 +292,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                             },
                         }),
                         processReturn: tool({
-                            description: "Initiate a product return request",
+                            description: "Start return request",
                             parameters: z.object({
                                 orderId: z.string().describe("The order ID"),
                                 reason: z.enum(["defective", "wrong_item", "changed_mind", "other"]).describe("Return reason"),
@@ -327,7 +312,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                         }),
                     } : {}),
                     escalateToAgent: tool({
-                        description: "Transfer conversation to a human agent",
+                        description: "Transfer to human agent",
                         parameters: z.object({
                             reason: z.string().describe("Why the customer needs a human agent"),
                         }),
@@ -341,7 +326,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                         },
                     }),
                     captureLeadInfo: tool({
-                        description: "Capture customer contact information for follow-up",
+                        description: "Save customer contact info",
                         parameters: z.object({
                             email: z.string().optional().describe("Customer email"),
                             phone: z.string().optional().describe("Customer phone"),
@@ -358,7 +343,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                         },
                     }),
                     searchWeb: tool({
-                        description: "Search the web for live, up-to-date information to answer a customer question. Use this when the knowledge base doesn't have a good answer.",
+                        description: "Search web for live info",
                         parameters: z.object({
                             query: z.string().describe("The search query"),
                         }),
@@ -369,7 +354,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                         },
                     }),
                     fetchPage: tool({
-                        description: "Fetch the content of a specific web page URL to answer questions about it.",
+                        description: "Fetch web page content",
                         parameters: z.object({
                             url: z.string().describe("The full URL to fetch (must start with http:// or https://)"),
                         }),
@@ -396,7 +381,7 @@ Welcome message: ${branding?.welcomeMessage || "Hi! How can I help you?"}`;
                             content: text || "",
                             metadata: { toolCalls, toolResults, topSimilarity, lowConfidence, userSentiment }
                         });
-                        
+
                         await triggerConversationMessage(conversationId, {
                             role: "assistant",
                             content: text || "",

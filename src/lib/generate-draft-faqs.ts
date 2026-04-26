@@ -1,42 +1,35 @@
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import { withRetry } from "@/lib/ai-provider";
+import { z } from "zod";
 
 /**
  * Given scraped text + business type, generate draft FAQs.
+ * Optimized for token efficiency.
  */
 export async function generateDraftFaqs(
     scrapedContent: string,
     businessType: string,
-    businessName: string
+    businessName: string,
+    count: number = 10
 ): Promise<{ question: string; answer: string }[]> {
-    const text = await withRetry(async (ai, modelId) => {
-        const { text } = await generateText({
-            model: ai.chat(modelId),
-            maxRetries: 0,
-            prompt: `You are helping set up a customer service AI for "${businessName}", a ${businessType} business.
-
-Based on the website content below, generate 8 realistic customer FAQ Q&A pairs.
-Rules:
-- Questions should be real things customers ask
-- Answers should be specific to this business (use names, details from the content)
-- If you don't have specific info, write a sensible placeholder in [brackets]
-- Output ONLY a JSON array: [{"question": "...", "answer": "..."}, ...]
-- No explanation, no markdown, just the JSON array
-
-WEBSITE CONTENT:
-${scrapedContent.slice(0, 4000)}`,
-        });
-        return text;
-    });
-
     try {
-        const match = text.match(/\[[\s\S]*\]/);
-        if (!match) return [];
-        const parsed = JSON.parse(match[0]);
-        return Array.isArray(parsed)
-            ? parsed.filter((f) => f.question && f.answer).slice(0, 8)
-            : [];
-    } catch {
+        const { object } = await withRetry(async (ai, modelId) => {
+            return await generateObject({
+                model: ai.chat(modelId),
+                schema: z.object({
+                    faqs: z.array(z.object({
+                        question: z.string(),
+                        answer: z.string(),
+                    })).length(count),
+                }),
+                system: `You are an FAQ generator for "${businessName}" (${businessType}). Generate exactly ${count} JSON Q&A pairs based on the provided website text. Use [brackets] for missing info.`,
+                prompt: `WEBSITE TEXT: ${scrapedContent.slice(0, 3000)}`,
+            });
+        });
+
+        return object.faqs;
+    } catch (err) {
+        console.error("[GenerateDraftFAQs] error:", err);
         return [];
     }
 }

@@ -230,6 +230,7 @@ export default function DashboardPage() {
     const [scrapeError, setScrapeError] = useState("");
     const [draftFaqs, setDraftFaqs] = useState<{ question: string; answer: string; accepted: boolean }[]>([]);
     const [showDraftFaqs, setShowDraftFaqs] = useState(false);
+    const [lastScrapedContent, setLastScrapedContent] = useState("");
 
     const [config, setConfig] = useState<BusinessConfig>({
         businessName: "",
@@ -362,38 +363,54 @@ export default function DashboardPage() {
     };
 
     // ── Website scrape → AI FAQ draft pipeline ──
-    const handleScrapeAndGenerate = async () => {
-        if (!scrapeUrl) return;
+    const handleScrapeAndGenerate = async (moreArg?: boolean | React.MouseEvent) => {
+        const more = moreArg === true;
+        if (!scrapeUrl && !lastScrapedContent) return;
         setScrapeLoading(true);
         setScrapeError("");
-        setDraftFaqs([]);
-        setShowDraftFaqs(false);
+        if (!more) {
+            setDraftFaqs([]);
+            setShowDraftFaqs(false);
+        }
 
         try {
-            // Step 1: scrape the URL
-            const scrapeRes = await fetch("/api/scrape", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: scrapeUrl }),
-            });
-            const scrapeData = await scrapeRes.json();
-            if (!scrapeRes.ok) throw new Error(scrapeData.error || "Scrape failed");
+            let content = lastScrapedContent;
+            
+            // Only scrape if we don't have content or if it's a new request (not "more")
+            if (!more || !content) {
+                const scrapeRes = await fetch("/api/scrape", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url: scrapeUrl }),
+                });
+                const scrapeData = await scrapeRes.json();
+                if (!scrapeRes.ok) throw new Error(scrapeData.error || "Scrape failed");
+                content = scrapeData.content;
+                setLastScrapedContent(content);
+            }
 
             // Step 2: generate FAQs from scraped content
             const genRes = await fetch("/api/generate-faqs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    content: scrapeData.content,
+                    content: content,
                     businessType: config.businessType || "general",
                     businessName: config.businessName || "your business",
+                    count: 10,
                 }),
             });
             const genData = await genRes.json();
             if (!genRes.ok) throw new Error(genData.error || "FAQ generation failed");
 
-            setDraftFaqs((genData.faqs || []).map((f: { question: string; answer: string }) => ({ ...f, accepted: true })));
-            setShowDraftFaqs(true);
+            const newFaqs = (genData.faqs || []).map((f: { question: string; answer: string }) => ({ ...f, accepted: true }));
+            
+            if (more) {
+                setDraftFaqs(prev => [...prev, ...newFaqs]);
+            } else {
+                setDraftFaqs(newFaqs);
+                setShowDraftFaqs(true);
+            }
         } catch (err) {
             setScrapeError(err instanceof Error ? err.message : "Something went wrong");
         } finally {
@@ -766,7 +783,7 @@ export default function DashboardPage() {
                                         </p>
                                     )}
                                     <p className="text-[11px] text-[var(--text-muted)]">
-                                        AI reads your site and drafts up to 8 Q&As automatically.
+                                        AI reads your site and drafts up to 10 Q&As automatically.
                                     </p>
                                 </div>
                             </div>
@@ -809,7 +826,14 @@ export default function DashboardPage() {
                                             <Check className="w-3.5 h-3.5" /> Load Selected
                                         </button>
                                         <button
-                                            onClick={() => { setShowDraftFaqs(false); setDraftFaqs([]); }}
+                                            onClick={() => handleScrapeAndGenerate(true)}
+                                            disabled={scrapeLoading}
+                                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--accent-light)] border border-[var(--border-subtle)] bg-white hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-40"
+                                        >
+                                            {scrapeLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Generate 10 More"}
+                                        </button>
+                                        <button
+                                            onClick={() => { setShowDraftFaqs(false); setDraftFaqs([]); setLastScrapedContent(""); }}
                                             className="btn-secondary py-1.5 px-3 text-xs"
                                         >
                                             Dismiss

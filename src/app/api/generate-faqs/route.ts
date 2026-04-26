@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/generate-faqs
- * Takes scraped website content, calls LLM, returns 8 draft Q&A pairs.
+ * Takes scraped website content, calls LLM, returns draft Q&A pairs.
  *
- * Body: { content: string, businessType: string, businessName: string }
+ * Body: { content: string, businessType: string, businessName: string, count?: number }
  * Returns: { faqs: { question: string, answer: string }[] }
  */
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { content, businessType, businessName } = await req.json();
+        const { content, businessType, businessName, count } = await req.json();
 
         if (!content || !businessType) {
             return NextResponse.json({ error: "content and businessType are required" }, { status: 400 });
@@ -28,7 +28,8 @@ export async function POST(req: Request) {
         const faqs = await generateDraftFaqs(
             content,
             businessType,
-            businessName || "your business"
+            businessName || "your business",
+            count || 10
         );
 
         return NextResponse.json({ faqs });
