@@ -32,10 +32,9 @@ export default function ChatPage() {
     }, []);
 
     const apiTarget = slug ? `/api/chat/${slug}` : "/api/chat/athena";
-    console.log(`[ChatPage] useChat initializing with api: ${apiTarget}`);
 
     // Setup useChat to hit our specific route
-    const { messages, status, error, regenerate, sendMessage } = useChat({
+    const { messages, status, error, reload, sendMessage } = useChat({
         id: conversationId,
         // @ts-expect-error api is incorrectly missing from UseChatOptions type in this version
         api: apiTarget,
@@ -43,7 +42,7 @@ export default function ChatPage() {
     });
 
     // Fallback to reload if regenerate is not available
-    const reloadChat = regenerate || (() => { });
+    const reloadChat = reload || (() => { });
     const isLoading = status === "submitted" || status === "streaming";
     const [localInput, setLocalInput] = useState("");
 
@@ -64,7 +63,7 @@ export default function ChatPage() {
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!localInput.trim() || isLoading) return;
-        sendMessage({ text: localInput });
+        sendMessage({ content: localInput });
         setLocalInput("");
     };
 
@@ -282,9 +281,8 @@ export default function ChatPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ conversationId, slug, reason: "User explicitly requested human agent", email, phone }),
             });
-            // Use sendMessage to add a message to the chat
             sendMessage({ 
-                text: "I would like to speak to a human agent, please." 
+                content: "I would like to speak to a human agent, please." 
             });
         } catch (err) {
             console.error("Escalation failed", err);
@@ -632,6 +630,12 @@ export default function ChatPage() {
                     <input
                         value={localInput}
                         onChange={onInputChange}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit();
+                            }
+                        }}
                         placeholder="Type a message..."
                         className="input-field flex-1 py-3"
                         disabled={isLoading}

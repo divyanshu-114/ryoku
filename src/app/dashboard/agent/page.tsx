@@ -307,7 +307,7 @@ export default function AgentDashboardPage() {
             return (
                 c.customerName?.toLowerCase().includes(query) ||
                 c.customerEmail?.toLowerCase().includes(query) ||
-                c.lastMessage?.content.toLowerCase().includes(query)
+                c.lastMessage?.content?.toLowerCase().includes(query)
             );
         });
     const selectedConvoData = queue.find(c => c.id === selectedConvo);

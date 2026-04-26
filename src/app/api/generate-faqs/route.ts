@@ -20,6 +20,7 @@ export async function POST(req: Request) {
 
     try {
         const { content, businessType, businessName, count } = await req.json();
+        console.log(`[API/GenerateFAQs] Generating ${count || 10} FAQs for ${businessName} (${businessType}). Content length: ${content?.length}`);
 
         if (!content || !businessType) {
             return NextResponse.json({ error: "content and businessType are required" }, { status: 400 });
@@ -32,9 +33,10 @@ export async function POST(req: Request) {
             count || 10
         );
 
+        console.log(`[API/GenerateFAQs] Success. Generated ${faqs.length} FAQs.`);
         return NextResponse.json({ faqs });
     } catch (err) {
-        console.error("[GenerateFAQs]", err);
+        console.error("[API/GenerateFAQs] Error:", err);
         return NextResponse.json({ error: "Failed to generate FAQs" }, { status: 500 });
     }
 }

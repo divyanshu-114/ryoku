@@ -41,15 +41,20 @@ export async function POST(
 ) {
     const { slug: slugArray } = await params;
     
-    // Extract slug from array or default to athena
-    // Root call /api/chat results in undefined slugArray
     const slug = slugArray?.[0] || "athena";
     
-    console.log(`[API] Catch-all POST hit for slug: ${slug} (path: ${slugArray?.join("/") || "root"})`);
+    console.log(`[API] POST hit for slug: ${slug}`);
     
-    // Basic health check for GET-like probes
-    if (req.method === "GET") {
-        return new Response(JSON.stringify({ status: "ok", slug }), { status: 200 });
+    // Handle OPTIONS preflight
+    if (req.method === "OPTIONS") {
+        return new Response(null, {
+            status: 204,
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            },
+        });
     }
 
     return handleChatPOST(req, slug);

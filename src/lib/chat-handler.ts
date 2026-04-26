@@ -53,8 +53,6 @@ export async function handleChatPOST(
             businessId: business.id,
             event: "api_request",
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const branding = business.branding as any;
 
         // RAG retrieval
         let contextText = "";
@@ -64,16 +62,19 @@ export async function handleChatPOST(
         try {
             const lastMsg = messages[messages.length - 1];
             if (typeof lastMsg?.content === "string") {
-                // Sanitize + cap user input before any processing
                 userMessage = sanitizeUserInput(lastMsg.content.slice(0, MAX_USER_MESSAGE_LENGTH));
             } else if (lastMsg?.parts) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const raw = lastMsg.parts.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("");
                 userMessage = sanitizeUserInput(raw.slice(0, MAX_USER_MESSAGE_LENGTH));
+            } else if (Array.isArray(lastMsg?.content)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const raw = lastMsg.content.map((p: any) => p.text || "").join("");
+                userMessage = sanitizeUserInput(raw.slice(0, MAX_USER_MESSAGE_LENGTH));
             }
 
             // -- Handle Conversation Persistence --
-            if (conversationId && userMessage) {
+            if (conversationId && userMessage && userMessage !== "__init__") {
                 const existing = await db
                     .select()
                     .from(conversations)
@@ -103,7 +104,6 @@ export async function handleChatPOST(
                         updatedAt: new Date().toISOString(),
                     });
                 } else {
-                    // Update conversation timestamp
                     await db.update(conversations)
                         .set({ updatedAt: new Date() })
                         .where(eq(conversations.id, conversationId));
@@ -111,7 +111,6 @@ export async function handleChatPOST(
                     // ── Agent Takeover / Escalation Check ──
                     const isEscalationRequest = userMessage === "I would like to speak to a human agent, please.";
                     if (existing[0].assignedAgent || existing[0].status === "escalated" || isEscalationRequest) {
-                        // Persist user message
                         const [savedUserMsg] = await db.insert(dbMessages).values({
                             conversationId,
                             role: "user",
@@ -125,29 +124,22 @@ export async function handleChatPOST(
                         });
 
                         if (isEscalationRequest && existing[0].status === "escalated") {
-                            // Trigger typing indicator for bot
                             await pusherServer.trigger(`private-conversation-${conversationId}`, PUSHER_EVENTS.TYPING, { role: "assistant" });
-
-                            // Wait 2 seconds
                             await new Promise(resolve => setTimeout(resolve, 2000));
-
                             const waitMessage = "please wait for some time for an agent to join";
                             
-                            // Save wait message to DB
                             const [savedBotMsg] = await db.insert(dbMessages).values({
                                 conversationId,
                                 role: "assistant",
                                 content: waitMessage,
                             }).returning();
 
-                            // Also trigger via Pusher for instant UI update
                             await triggerConversationMessage(conversationId, {
                                 id: savedBotMsg.id,
                                 role: "assistant",
                                 content: waitMessage,
                             });
 
-                            // Return as a data stream response with a finish signal
                             return new Response(`0:${JSON.stringify(waitMessage)}\nd:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`, {
                                 headers: {
                                     "Content-Type": "text/plain; charset=utf-8",
@@ -157,7 +149,6 @@ export async function handleChatPOST(
                             });
                         }
 
-                        // Normal takeover response
                         return new Response("0:\"\"\n", {
                             headers: {
                                 "Content-Type": "text/plain; charset=utf-8",
@@ -168,21 +159,14 @@ export async function handleChatPOST(
                     }
                 }
 
-                let calculatedSentiment: "positive" | "neutral" | "negative" | "frustrated" = "neutral";
-                if (userMessage) {
-                    calculatedSentiment = analyzeSentiment(userMessage);
-                    userSentiment = calculatedSentiment;
-                }
-
-                // Insert user message to DB and get its ID
+                userSentiment = analyzeSentiment(userMessage);
                 const [savedUserMsg] = await db.insert(dbMessages).values({
                     conversationId,
                     role: "user",
                     content: userMessage,
-                    sentiment: calculatedSentiment,
+                    sentiment: userSentiment,
                 }).returning();
 
-                // Trigger real-time event for agents with exact ID
                 await triggerConversationMessage(conversationId, {
                     id: savedUserMsg.id,
                     role: "user",
@@ -190,7 +174,7 @@ export async function handleChatPOST(
                 });
             }
 
-            if (userMessage) {
+            if (userMessage && userMessage !== "__init__") {
                 const queryEmbedding = await generateEmbedding(userMessage);
                 if (queryEmbedding?.length) {
                     const results = await db.execute(
@@ -203,7 +187,6 @@ export async function handleChatPOST(
                     );
                     if (results.rows?.length) {
                         topSimilarity = Number(results.rows[0]?.similarity ?? 0);
-                        // Wrap context in XML delimiters so the LLM treats it as data, not instructions
                         contextText = wrapContext(
                             results.rows.map((r) => r.content as string).join("\n\n")
                         );
@@ -215,7 +198,7 @@ export async function handleChatPOST(
         }
 
         const lowConfidence = !contextText || topSimilarity < autoHandoffThreshold;
-        if (userMessage && lowConfidence) {
+        if (userMessage && userMessage !== "__init__" && lowConfidence) {
             await trackKnowledgeGap(business.id, userMessage);
             await logAnalyticsEvent(business.id, "knowledge_gap", {
                 conversationId,
@@ -243,9 +226,7 @@ Rules:
             systemPrompt += "\nFree plan: FAQ ONLY. No order/return/database help.";
         }
 
-        // Stream response with tool calling
         return await withRetry(async (ai, modelId) => {
-            // Cap history to prevent context-stuffing attacks
             const cappedMessages = capHistory(messages);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -259,34 +240,30 @@ Rules:
                 else if (m.parts) content = m.parts.map((p: any) => p.text || "").join("");
 
                 return {
-                    role: m.role === "system" || m.role === "tool" ? "user" : m.role,
-                    // Re-sanitize each turn (defence-in-depth)
+                    role: m.role,
                     content: sanitizeUserInput(content.slice(0, MAX_USER_MESSAGE_LENGTH)),
+                    ...(m.toolCalls ? { toolCalls: m.toolCalls } : {}),
+                    ...(m.toolResults ? { toolResults: m.toolResults } : {}),
                 };
-            }).filter((m: { role: string; content: string }) => ["user", "assistant"].includes(m.role) && m.content.trim());
+            }).filter((m: any) => ["user", "assistant", "system", "tool"].includes(m.role) && (m.content.trim() || m.role === "tool" || (m.role === "assistant" && m.toolCalls)));
 
-            // Remove leading assistant messages
-            while (cleanMessages.length > 0 && cleanMessages[0].role === "assistant") {
+            while (cleanMessages.length > 0 && cleanMessages[0].role !== "user") {
                 cleanMessages.shift();
             }
 
-            // Merge consecutive same-role messages
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const merged: any[] = [];
             for (const msg of cleanMessages) {
-                if (merged.length > 0 && merged[merged.length - 1].role === msg.role) {
+                if (merged.length > 0 && merged[merged.length - 1].role === msg.role && msg.role !== "tool") {
                     merged[merged.length - 1].content += "\n\n" + msg.content;
                 } else {
                     merged.push(msg);
                 }
             }
 
-            // Prepend system prompt
             const final = [...merged];
             if (final.length > 0 && final[0].role === "user") {
-                // Wrap user turn in XML tag to clearly separate it from system instructions
                 final[0].content = systemPrompt + "\n\n---\n\n" + wrapUserMessage(final[0].content);
-            } else {
+            } else if (final.length === 0 || final[0].role !== "system") {
                 final.unshift({ role: "system", content: systemPrompt });
             }
 
@@ -304,7 +281,6 @@ Rules:
                             }),
                             // @ts-expect-error Zod type mismatch with AI SDK
                             execute: async ({ orderId, email }: { orderId?: string; email?: string }) => {
-                                // Query orders table
                                 const conditions = [];
                                 if (orderId) conditions.push(sql`order_id = ${orderId}`);
                                 if (email) conditions.push(sql`customer_email = ${email}`);
@@ -347,7 +323,6 @@ Rules:
                         }),
                         // @ts-expect-error Zod type mismatch with AI SDK
                         execute: async () => {
-                            // Redirect to UI-based email verification flow
                             return {
                                 escalated: false,
                                 message: "To connect with a human agent, please click the 'Real Agent' button at the top of the chat to verify your email address.",
@@ -424,20 +399,15 @@ Rules:
                     "Access-Control-Allow-Origin": "*",
                     "Access-Control-Allow-Methods": "POST, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                    "x-vercel-ai-data-stream": "v1",
                 },
             });
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("[Chat Error]", error);
         return new Response(
-            JSON.stringify({ error: "Service temporarily unavailable" }),
-            {
-                status: 500,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                },
-            }
+            JSON.stringify({ error: "Service unavailable", details: error.message }),
+            { status: 500, headers: { "Content-Type": "application/json" } }
         );
     }
 }
@@ -453,7 +423,6 @@ export async function handleChatDELETE(
     }
 
     try {
-        // Delete the conversation only if it is NOT verified
         await db
             .delete(conversations)
             .where(

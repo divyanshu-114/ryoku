@@ -273,6 +273,7 @@ export default function DashboardPage() {
                     escalationEmail: data.business.config?.escalationEmail || "",
                     ...data.business.config // Include any dynamic fields
                 });
+                setScrapeUrl(data.business.config?.websiteUrl || "");
             }
         } catch {
             // No existing business

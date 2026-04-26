@@ -30,8 +30,14 @@ export async function generateDraftFaqs(
             });
         });
 
-        // Clean the text in case the model included markdown blocks
-        const cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        // Robustly extract JSON from the text
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            console.error("[GenerateDraftFAQs] No JSON found in response:", text);
+            return [];
+        }
+
+        const cleanText = jsonMatch[0];
         const object = JSON.parse(cleanText);
         return object.faqs || [];
     } catch (err) {
