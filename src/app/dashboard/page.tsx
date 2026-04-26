@@ -1044,6 +1044,9 @@ export default function DashboardPage() {
                         <p className="text-xs text-[var(--text-muted)]">
                             Send POST requests with <code className="text-[var(--accent-light)]">{`{ "messages": [...] }`}</code> body. Add <code className="text-[var(--accent-light)]">Authorization: Bearer rk_...</code> header.
                         </p>
+                        <p className="text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-subtle)]/50">
+                            Need help? Check out our <a href="/docs/sdk" className="text-[var(--accent-light)] font-semibold hover:underline inline-flex items-center gap-1">API Documentation <ExternalLink className="w-3 h-3" /></a>
+                        </p>
                     </div>
 
                     {/* API Key Management */}
@@ -1180,6 +1183,9 @@ const reader = response.body.getReader();
                                 {copiedSnippet ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                             </button>
                         </div>
+                        <p className="text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-subtle)]/50">
+                            Need help integrating? Check out our <a href="/docs/sdk" className="text-[var(--accent-light)] font-semibold hover:underline inline-flex items-center gap-1">SDK & Integration Guide <ExternalLink className="w-3 h-3" /></a>
+                        </p>
                     </div>
 
                     {/* Chat Preview removed */}
