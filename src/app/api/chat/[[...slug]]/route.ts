@@ -1,4 +1,39 @@
 import { handleChatPOST } from "@/lib/chat-handler";
+import { db } from "@/lib/db";
+import { businesses, agents } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { NextResponse } from "next/server";
+
+export async function GET(
+    _req: Request,
+    { params }: { params: Promise<{ slug?: string[] }> }
+) {
+    const { slug: slugArray } = await params;
+    const slug = slugArray?.[0] || "athena";
+
+    const [business] = await db
+        .select()
+        .from(businesses)
+        .where(eq(businesses.slug, slug))
+        .limit(1);
+
+    if (!business) {
+        return NextResponse.json({ error: "Business not found" }, { status: 404 });
+    }
+
+    const onlineAgents = await db
+        .select()
+        .from(agents)
+        .where(and(
+            eq(agents.businessId, business.id),
+            eq(agents.status, "online")
+        ));
+
+    return NextResponse.json({ 
+        online: onlineAgents.length > 0,
+        count: onlineAgents.length 
+    });
+}
 
 export async function POST(
     req: Request,

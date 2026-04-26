@@ -1,7 +1,7 @@
 import { streamText, tool } from "ai";
 import { db } from "@/lib/db";
 import { businesses, conversations, messages as dbMessages, analyticsEvents } from "@/lib/db/schema";
-import { triggerConversationMessage, triggerNewConversation } from "@/lib/pusher-server";
+import { triggerConversationMessage, triggerNewConversation, pusherServer, PUSHER_EVENTS } from "@/lib/pusher-server";
 import { withRetry, generateEmbedding } from "@/lib/ai-provider";
 import { analyzeSentiment, trackKnowledgeGap, logAnalyticsEvent } from "@/lib/intelligence";
 import {
@@ -108,10 +108,10 @@ export async function handleChatPOST(
                         .set({ updatedAt: new Date() })
                         .where(eq(conversations.id, conversationId));
 
-                    // ── Agent Takeover Check ──
-                    // If an agent has taken over this conversation, do NOT call the LLM.
-                    // Just persist the user message and push it to the agent via Pusher.
-                    if (existing[0].assignedAgent) {
+                    // ── Agent Takeover / Escalation Check ──
+                    const isEscalationRequest = userMessage === "I would like to speak to a human agent, please.";
+                    if (existing[0].assignedAgent || existing[0].status === "escalated" || isEscalationRequest) {
+                        // Persist user message
                         const [savedUserMsg] = await db.insert(dbMessages).values({
                             conversationId,
                             role: "user",
@@ -124,18 +124,47 @@ export async function handleChatPOST(
                             content: userMessage,
                         });
 
-                        // Return an empty stream — the agent will reply via Pusher
-                        return new Response(
-                            new ReadableStream({
-                                start(controller) { controller.close(); },
-                            }),
-                            {
+                        if (isEscalationRequest && existing[0].status === "escalated") {
+                            // Trigger typing indicator for bot
+                            await pusherServer.trigger(`private-conversation-${conversationId}`, PUSHER_EVENTS.TYPING, { role: "assistant" });
+
+                            // Wait 2 seconds
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+
+                            const waitMessage = "please wait for some time for an agent to join";
+                            
+                            // Save wait message to DB
+                            const [savedBotMsg] = await db.insert(dbMessages).values({
+                                conversationId,
+                                role: "assistant",
+                                content: waitMessage,
+                            }).returning();
+
+                            // Also trigger via Pusher for instant UI update
+                            await triggerConversationMessage(conversationId, {
+                                id: savedBotMsg.id,
+                                role: "assistant",
+                                content: waitMessage,
+                            });
+
+                            // Return as a data stream response with a finish signal
+                            return new Response(`0:${JSON.stringify(waitMessage)}\nd:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`, {
                                 headers: {
                                     "Content-Type": "text/plain; charset=utf-8",
+                                    "x-vercel-ai-data-stream": "v1",
                                     "Access-Control-Allow-Origin": "*",
-                                },
+                                }
+                            });
+                        }
+
+                        // Normal takeover response
+                        return new Response("0:\"\"\n", {
+                            headers: {
+                                "Content-Type": "text/plain; charset=utf-8",
+                                "x-vercel-ai-data-stream": "v1",
+                                "Access-Control-Allow-Origin": "*",
                             }
-                        );
+                        });
                     }
                 }
 

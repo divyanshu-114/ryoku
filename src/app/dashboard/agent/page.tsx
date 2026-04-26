@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher-client";
 import { showToast } from "@/lib/toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AgentProfile { id: string; businessId: string; displayName: string; status: string; }
 interface QueueConvo {
@@ -41,6 +42,7 @@ export default function AgentDashboardPage() {
     const [resolving, setResolving] = useState(false);
     const [takingOver, setTakingOver] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const lastTypingSentRef = useRef<number>(0);
@@ -90,6 +92,20 @@ export default function AgentDashboardPage() {
         const pusher = getPusherClient();
         const channel = pusher.subscribe(`private-business-${agent.businessId}`);
 
+        // Set status to online when workspace opens
+        fetch("/api/agent", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "online" }) }).catch(() => {});
+
+        const handleUnload = () => {
+            fetch("/api/agent", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "offline" }),
+                keepalive: true
+            }).catch(() => {});
+        };
+
+        window.addEventListener("beforeunload", handleUnload);
+
         channel.bind(PUSHER_EVENTS.NEW_CONVERSATION, () => fetchQueue());
         channel.bind(PUSHER_EVENTS.HANDOFF, (data: { conversationId: string; reason?: string }) => {
             fetchQueue();
@@ -101,7 +117,12 @@ export default function AgentDashboardPage() {
         });
         channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, () => fetchQueue());
 
-        return () => { clearInterval(interval); channel.unbind_all(); pusher.unsubscribe(`private-business-${agent.businessId}`); };
+        return () => { 
+            window.removeEventListener("beforeunload", handleUnload);
+            clearInterval(interval); 
+            channel.unbind_all(); 
+            pusher.unsubscribe(`private-business-${agent.businessId}`); 
+        };
     }, [agent, fetchQueue]);
 
     // Fetch canned responses
@@ -228,10 +249,13 @@ export default function AgentDashboardPage() {
         finally { setTakingOver(false); }
     };
 
-    const deleteConversation = async () => {
+    const deleteConversation = () => {
         if (!selectedConvo || deleting) return;
-        if (!confirm("Are you sure you want to permanently delete this conversation and all its messages? This action cannot be undone.")) return;
-        
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!selectedConvo || deleting) return;
         setDeleting(true);
         try {
             const res = await fetch(`/api/conversations/${selectedConvo}`, { method: "DELETE" });
@@ -239,9 +263,13 @@ export default function AgentDashboardPage() {
             showToast("Conversation permanently deleted", "success");
             setSelectedConvo(null);
             setMobileShowChat(false);
+            setShowDeleteConfirm(false);
             fetchQueue();
-        } catch { showToast("Failed to delete conversation", "error"); }
-        finally { setDeleting(false); }
+        } catch { 
+            showToast("Failed to delete conversation", "error"); 
+        } finally { 
+            setDeleting(false); 
+        }
     };
 
     const createCannedResponse = async () => {
@@ -432,7 +460,7 @@ export default function AgentDashboardPage() {
 
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                {chatMessages.map(msg => {
+                                {chatMessages.filter(m => m.content?.trim()).map(msg => {
                                     const isCustomer = msg.role === "user";
                                     const isAgent = msg.role === "agent";
                                     return (
@@ -544,7 +572,53 @@ export default function AgentDashboardPage() {
                         </>
                     )}
                 </section>
-            </div>
+            {/* Custom Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showDeleteConfirm && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="w-full max-w-md rounded-2xl p-8 relative overflow-hidden"
+                            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", boxShadow: "var(--shadow-2xl)" }}
+                        >
+                            {/* Warning glow background */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/10 blur-[80px] rounded-full pointer-events-none" />
+                            
+                            <div className="text-center">
+                                <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-6" style={{ border: "1px solid rgba(239,68,68,0.2)" }}>
+                                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Delete Conversation?</h3>
+                                <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
+                                    You are about to permanently delete this conversation and all its history. <span className="text-red-400 font-medium">This action cannot be undone.</span>
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 py-3 px-4 rounded-xl font-medium transition-all hover:bg-white/5"
+                                    style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={confirmDelete}
+                                    disabled={deleting}
+                                    className="flex-1 py-3 px-4 rounded-xl font-bold transition-all bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                                    style={{ color: "white" }}
+                                >
+                                    {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                    Delete Forever
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
         </main>
     );
 }

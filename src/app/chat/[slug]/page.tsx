@@ -161,9 +161,20 @@ export default function ChatPage() {
     const [phoneInput, setPhoneInput] = useState("");
     const [contactLoading, setContactLoading] = useState(false);
     const [contactError, setContactError] = useState("");
+    const [agentOnline, setAgentOnline] = useState(true);
+    const [showOfflineModal, setShowOfflineModal] = useState(false);
+    const [offlineForm, setOfflineForm] = useState({ name: "", email: "", query: "" });
+    const [offlineLoading, setOfflineLoading] = useState(false);
+    const [offlineError, setOfflineError] = useState("");
     const [agentTyping, setAgentTyping] = useState(false);
     const agentTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTypingSentRef = useRef<number>(0);
+
+    // Check agent status
+    useEffect(() => {
+        if (!slug) return;
+        fetch(`/api/chat/${slug}`).then(r => r.json()).then(d => setAgentOnline(d.online)).catch(() => {});
+    }, [slug]);
 
     // Pusher: listen for agent messages and conversation updates
     useEffect(() => {
@@ -198,6 +209,18 @@ export default function ChatPage() {
                         createdAt: new Date().toISOString(),
                     }];
                 });
+            } else if (data.role === "assistant") {
+                // Handle instant bot replies (like escalation wait message)
+                setRealTimeMessages(prev => {
+                    const msgId = data.id ? `${data.id}` : `assistant-${Date.now()}`;
+                    if (prev.some(m => m.id === msgId)) return prev;
+                    return [...prev, {
+                        id: msgId,
+                        role: "assistant",
+                        content: data.content,
+                        createdAt: new Date().toISOString(),
+                    }];
+                });
             }
         });
 
@@ -216,7 +239,7 @@ export default function ChatPage() {
         });
         
         channel.bind(PUSHER_EVENTS.TYPING, (data?: { role: string }) => {
-            if (data?.role === "agent") {
+            if (data?.role === "agent" || data?.role === "assistant") {
                 setAgentTyping(true);
                 if (agentTypingTimeoutRef.current) clearTimeout(agentTypingTimeoutRef.current);
                 agentTypingTimeoutRef.current = setTimeout(() => setAgentTyping(false), 3000);
@@ -267,10 +290,24 @@ export default function ChatPage() {
         }
     };
 
-    const handleTalkToAgentClick = () => {
-        if (contactSubmitted) {
-            handleEscalate(emailInput, phoneInput);
-        } else {
+    const handleTalkToAgentClick = async () => {
+        // Re-check status just in case
+        try {
+            const res = await fetch(`/api/chat/${slug}`);
+            const data = await res.json();
+            setAgentOnline(data.online);
+            
+            if (!data.online) {
+                setShowOfflineModal(true);
+                return;
+            }
+
+            if (contactSubmitted) {
+                handleEscalate(emailInput, phoneInput);
+            } else {
+                setShowContactModal(true);
+            }
+        } catch {
             setShowContactModal(true);
         }
     };
@@ -295,6 +332,34 @@ export default function ChatPage() {
             setContactError(err instanceof Error ? err.message : "Failed to submit request.");
         } finally {
             setContactLoading(false);
+        }
+    };
+
+    const handleSubmitOfflineQuery = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!offlineForm.email || !offlineForm.query) return;
+        setOfflineLoading(true);
+        setOfflineError("");
+        try {
+            const res = await fetch("/api/chat/offline-query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...offlineForm, slug }),
+            });
+            if (!res.ok) throw new Error("Failed to send");
+            setContactSubmitted(true);
+            setShowOfflineModal(false);
+            // System message in chat
+            setRealTimeMessages(prev => [...prev, {
+                id: `system-${Date.now()}`,
+                role: "system",
+                content: "Your query has been sent to our team. We'll get back to you via email soon!",
+                createdAt: new Date().toISOString(),
+            }]);
+        } catch {
+            setOfflineError("Failed to send message. Please try again.");
+        } finally {
+            setOfflineLoading(false);
         }
     };
 
@@ -654,6 +719,45 @@ export default function ChatPage() {
                                     style={{ background: accentColor, marginTop: "24px" }}
                                 >
                                     {contactLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Connect"}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            {/* Offline Query Modal */}
+            <AnimatePresence>
+                {showOfflineModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-sm rounded-2xl p-6 relative"
+                            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", boxShadow: "var(--shadow-xl)" }}
+                        >
+                            <button onClick={() => setShowOfflineModal(false)} className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                                <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="text-center mb-6">
+                                <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>
+                                    <Clock className="w-6 h-6 text-red-500" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">No live agents available</h3>
+                                <p className="text-sm text-[var(--text-secondary)] mt-1">
+                                    Our team is currently offline. Leave a message and we&apos;ll get back to you via email.
+                                </p>
+                            </div>
+
+                            {offlineError && <div className="mb-4 p-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-500 text-center">{offlineError}</div>}
+
+                            <form onSubmit={handleSubmitOfflineQuery} className="space-y-4">
+                                <input placeholder="Your Name" className="input-field w-full" value={offlineForm.name} onChange={e => setOfflineForm(p => ({ ...p, name: e.target.value }))} />
+                                <input type="email" placeholder="Email Address" className="input-field w-full" value={offlineForm.email} onChange={e => setOfflineForm(p => ({ ...p, email: e.target.value }))} required />
+                                <textarea placeholder="How can we help?" className="input-field w-full min-h-[100px] py-3 resize-none" value={offlineForm.query} onChange={e => setOfflineForm(p => ({ ...p, query: e.target.value }))} required />
+                                <button type="submit" disabled={offlineLoading || !offlineForm.email || !offlineForm.query} className="btn-primary w-full py-2.5" style={{ background: accentColor }}>
+                                    {offlineLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Message"}
                                 </button>
                             </form>
                         </motion.div>

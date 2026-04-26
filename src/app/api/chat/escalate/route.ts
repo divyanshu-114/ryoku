@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { conversations, businesses, analyticsEvents } from "@/lib/db/schema";
-import { triggerHandoff } from "@/lib/pusher-server";
+import { conversations, businesses, analyticsEvents, messages } from "@/lib/db/schema";
+import { triggerHandoff, triggerConversationMessage, pusherServer, PUSHER_EVENTS } from "@/lib/pusher-server";
 import { eq } from "drizzle-orm";
 
 function getErrorMessage(error: unknown): string {
