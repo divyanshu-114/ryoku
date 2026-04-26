@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     ArrowLeft, Loader2, Send, User, Bot, Circle, Clock,
     AlertTriangle, Zap, MessageSquare, ChevronRight,
-    CheckCircle2, Plus, X, Mail, Shield, Phone,
+    CheckCircle2, Plus, X, Mail, Shield, Phone, Trash2,
 } from "lucide-react";
 import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher-client";
 import { showToast } from "@/lib/toast";
@@ -40,6 +40,7 @@ export default function AgentDashboardPage() {
     const [newCanned, setNewCanned] = useState({ title: "", content: "", shortcut: "" });
     const [resolving, setResolving] = useState(false);
     const [takingOver, setTakingOver] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const lastTypingSentRef = useRef<number>(0);
@@ -227,6 +228,22 @@ export default function AgentDashboardPage() {
         finally { setTakingOver(false); }
     };
 
+    const deleteConversation = async () => {
+        if (!selectedConvo || deleting) return;
+        if (!confirm("Are you sure you want to permanently delete this conversation and all its messages? This action cannot be undone.")) return;
+        
+        setDeleting(true);
+        try {
+            const res = await fetch(`/api/conversations/${selectedConvo}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete");
+            showToast("Conversation permanently deleted", "success");
+            setSelectedConvo(null);
+            setMobileShowChat(false);
+            fetchQueue();
+        } catch { showToast("Failed to delete conversation", "error"); }
+        finally { setDeleting(false); }
+    };
+
     const createCannedResponse = async () => {
         if (!newCanned.title.trim() || !newCanned.content.trim()) return;
         try {
@@ -402,6 +419,13 @@ export default function AgentDashboardPage() {
                                         style={{ border: "1px solid rgba(16,185,129,0.2)" }}>
                                         {resolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                         Resolve
+                                    </button>
+                                    {/* Delete */}
+                                    <button onClick={deleteConversation} disabled={deleting}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 disabled:opacity-40"
+                                        style={{ border: "1px solid rgba(239,68,68,0.2)" }}>
+                                        {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                        Delete
                                     </button>
                                 </div>
                             </div>

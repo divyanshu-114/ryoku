@@ -31,31 +31,31 @@ function getColorForType(type: ToastType): { bg: string; border: string; text: s
     switch (type) {
         case "success":
             return {
-                bg: "rgba(34, 197, 94, 0.1)",
-                border: "1px solid rgba(34, 197, 94, 0.3)",
-                text: "#22c55e",
+                bg: "#10b981",
+                border: "1px solid #059669",
+                text: "#ffffff",
                 icon: "✓",
             };
         case "error":
             return {
-                bg: "rgba(239, 68, 68, 0.1)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                text: "#ef4444",
+                bg: "#ef4444",
+                border: "1px solid #dc2626",
+                text: "#ffffff",
                 icon: "✕",
             };
         case "warning":
             return {
-                bg: "rgba(233, 213, 63, 0.1)",
-                border: "1px solid rgba(233, 213, 63, 0.3)",
-                text: "#e9d53f",
+                bg: "#f59e0b",
+                border: "1px solid #d97706",
+                text: "#ffffff",
                 icon: "!",
             };
         case "info":
         default:
             return {
-                bg: "rgba(59, 130, 246, 0.1)",
-                border: "1px solid rgba(59, 130, 246, 0.3)",
-                text: "#3b82f6",
+                bg: "#3b82f6",
+                border: "1px solid #2563eb",
+                text: "#ffffff",
                 icon: "i",
             };
     }
@@ -72,7 +72,7 @@ export function showToast(message: string, type: ToastType = "info", duration = 
     toastEl.style.cssText = `
         background: ${colors.bg};
         border: ${colors.border};
-        color: #fff;
+        color: ${colors.text};
         padding: 12px 16px;
         border-radius: 8px;
         font-size: 14px;

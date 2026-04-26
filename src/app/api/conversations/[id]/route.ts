@@ -92,3 +92,42 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
 }
+
+// DELETE /api/conversations/[id] — Permanently delete conversation
+export async function DELETE(
+    _req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const [business] = await db
+        .select()
+        .from(businesses)
+        .where(eq(businesses.userId, session.user.id))
+        .limit(1);
+
+    if (!business) {
+        return NextResponse.json({ error: "No business found" }, { status: 404 });
+    }
+
+    // Verify ownership and delete
+    // Note: If using a real database with foreign keys, you might need to delete messages first 
+    // if cascading is not enabled.
+    await db
+        .delete(messages)
+        .where(eq(messages.conversationId, id));
+
+    const result = await db
+        .delete(conversations)
+        .where(and(
+            eq(conversations.id, id),
+            eq(conversations.businessId, business.id)
+        ));
+
+    return NextResponse.json({ success: true });
+}
