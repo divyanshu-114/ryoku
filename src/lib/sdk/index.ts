@@ -2,7 +2,7 @@ import type { Message, Session, ChatOptions, EscalateOptions, OfflineQueryOption
 
 export class RyokuChat {
     private baseUrl: string;
-    private pusher: unknown | null = null;
+    private pusher: any = null;
     private config: RyokuConfig;
     private currentSession: Session | null = null;
     private unsubscribeCallbacks: (() => void)[] = [];
@@ -18,7 +18,7 @@ export class RyokuChat {
                 this.pusher = new Pusher(this.config.pusherKey, {
                     cluster: this.config.pusherCluster || "us2",
                     authEndpoint: `${this.baseUrl}/api/pusher/auth`,
-                };
+                });
             } catch (e) {
                 console.warn("Pusher not available");
             }

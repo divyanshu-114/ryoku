@@ -30,12 +30,14 @@ export default function Navbar() {
 
     const handleScroll = (e: Event) => {
       // Get scroll position from the element that actually scrolled
-      const target = e.target as HTMLElement;
+      const target = e.target;
       if (!target) return;
 
-      const y = (target === document || target === window as any) 
-        ? window.scrollY 
-        : (target.scrollTop || 0);
+      const y = target === document || target === window
+        ? window.scrollY
+        : target instanceof HTMLElement
+        ? target.scrollTop
+        : 0;
       
       // Update visibility state
       setLastScrollY((previousY) => {
@@ -79,14 +81,20 @@ export default function Navbar() {
   }
 
   // ─── Links Configuration ───
-  const landingLinks = [
+  interface NavLink {
+    href: string;
+    label: string;
+    icon?: any;
+  }
+
+  const landingLinks: NavLink[] = [
     { href: "/docs/sdk", label: "Documentation" },
     { href: "/#features", label: "Features" },
     { href: "/#how-it-works", label: "How It Works" },
     { href: "/#pricing", label: "Pricing" },
   ];
 
-  const dashLinks = [
+  const dashLinks: NavLink[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/dashboard/agent", label: "Agent", icon: Headphones },

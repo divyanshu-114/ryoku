@@ -56,8 +56,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.sub = user.id;
             }
-            if (account?.provider === "google") {
-                token.picture = account.profile?.picture;
+            if (account?.provider === "google" && account.profile) {
+                token.picture = (account.profile as any).picture;
             }
             return token;
         },
