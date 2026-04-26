@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,7 +23,15 @@ import { getPusherClient, PUSHER_EVENTS } from "@/lib/pusher-client";
 
 export default function ChatPage() {
     const { slug } = useParams<{ slug: string }>();
+    const [isEmbed, setIsEmbed] = useState(false);
     const [conversationId, setConversationId] = useState("00000000-0000-0000-0000-000000000000");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            setIsEmbed(params.get("embed") === "1");
+        }
+    }, []);
 
     useEffect(() => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {

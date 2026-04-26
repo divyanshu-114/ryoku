@@ -1,0 +1,29 @@
+{
+  "name": "ryoku-chat",
+  "version": "2.0.0",
+  "description": "Chat SDK with agent status, live handoff, and offline handling",
+  "main": "dist/index.js",
+  "browser": "dist/ryoku-chat.umd.js",
+  "module": "dist/index.esm.js", 
+  "types": "dist/types/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "bundle": "node build.js"
+  },
+  "keywords": ["chat", "ai", "customer-support", "widget", "escalation"],
+  "license": "MIT",
+  "homepage": "https://ryoku.app/docs/sdk",
+  "repository": {
+    "type": "git", 
+    "url": "https://github.com/anomalyco/ryoku"
+  },
+  "peerDependencies": {
+    "pusher-js": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pusher-js": {
+      "optional": true
+    }
+  }
+}

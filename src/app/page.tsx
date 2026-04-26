@@ -732,9 +732,10 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
             {[
+              ["/docs/sdk", "Documentation"],
               ["/dashboard", "Dashboard"],
               ["/auth/login", "Sign In"],
-            ].filter(([href]) => session ? (href === "/dashboard") : (href === "/auth/login" || true)).map(([href, label]) => (
+            ].filter(([href]) => session ? (href !== "/auth/login") : (href === "/auth/login" || true)).map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
