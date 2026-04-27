@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -223,6 +223,7 @@ export default function DashboardPage() {
     const [copiedSnippet, setCopiedSnippet] = useState(false);
     const [botHealth, setBotHealth] = useState<BotHealthSummary | null>(null);
     const [quickLaunchMode, setQuickLaunchMode] = useState(false);
+    const [showValidation, setShowValidation] = useState(false);
 
     // ── Website import / AI FAQ generation ──
     const [scrapeUrl, setScrapeUrl] = useState("");
@@ -363,6 +364,53 @@ export default function DashboardPage() {
         setConfig((prev) => ({ ...prev, [field]: value }));
     };
 
+    // Computed validation for required Step 0 fields
+    const validationErrors = useMemo(() => {
+        const errors: { field: string; message: string }[] = [];
+        if (!config.businessName.trim()) {
+            errors.push({ field: "businessName", message: "Business name is required" });
+        }
+        if (!config.businessType) {
+            errors.push({ field: "businessType", message: "Please select a business type" });
+        }
+        const ownedSlug = existingBusiness?.slug;
+        if (!slug) {
+            errors.push({ field: "slug", message: "Chat handle is required" });
+        } else if (slug.length < 3) {
+            errors.push({ field: "slug", message: "Chat handle must be at least 3 characters" });
+        } else if (slug !== ownedSlug) {
+            // Only validate availability for slugs the user doesn't already own
+            if (checkingSlug) {
+                errors.push({ field: "slug", message: "Verifying handle availability…" });
+            } else if (slugAvailable === null) {
+                errors.push({ field: "slug", message: "Verifying handle availability…" });
+            } else if (slugAvailable === false) {
+                errors.push({ field: "slug", message: "This handle is already taken — choose another" });
+            }
+        }
+        return errors;
+    }, [config.businessName, config.businessType, slug, slugAvailable, checkingSlug, existingBusiness?.slug]);
+
+    const fieldError = (field: string) =>
+        showValidation ? validationErrors.find((e) => e.field === field) : undefined;
+
+    const handleGenerateAttempt = () => {
+        if (validationErrors.length > 0) {
+            setShowValidation(true);
+            if (step !== 0) setStep(0);
+            return;
+        }
+        handleSubmit();
+    };
+
+    const handleQuickLaunchValidated = () => {
+        if (validationErrors.length > 0) {
+            setShowValidation(true);
+            return;
+        }
+        handleQuickLaunch();
+    };
+
     const addFaq = () => {
         updateConfig("faqs", [...config.faqs, { question: "", answer: "" }]);
     };
@@ -445,7 +493,7 @@ export default function DashboardPage() {
 
     // ── Quick Launch: skip wizard, use smart defaults + FAQ pack ──
     const handleQuickLaunch = async () => {
-        if (!config.businessName || !config.businessType || !slug || slugAvailable === false) return;
+        if (validationErrors.length > 0) return;
         const defaults = getDefaultConfig(config.businessType as string);
         const faqPack = getFaqPack(config.businessType as string);
         const quickConfig = {
@@ -547,11 +595,17 @@ export default function DashboardPage() {
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Business Name *</label>
                                 <input
-                                    className="input-field"
+                                    className={`input-field ${fieldError("businessName") ? "ring-2 ring-[var(--danger)] border-[var(--danger)]" : ""}`}
                                     placeholder="Your Business Name"
                                     value={config.businessName}
                                     onChange={(e) => updateConfig("businessName", e.target.value)}
                                 />
+                                {fieldError("businessName") && (
+                                    <p className="mt-1.5 text-xs text-[var(--danger)] flex items-center gap-1">
+                                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                        {fieldError("businessName")!.message}
+                                    </p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Website URL</label>
@@ -566,7 +620,7 @@ export default function DashboardPage() {
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Chat Handle *</label>
                                 <div className="relative">
                                     <input
-                                        className="input-field pr-20"
+                                        className={`input-field pr-20 ${fieldError("slug") && slugAvailable !== true ? "ring-2 ring-[var(--danger)] border-[var(--danger)]" : ""}`}
                                         placeholder="your-business"
                                         value={slug}
                                         onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
@@ -581,12 +635,20 @@ export default function DashboardPage() {
                                         ) : null}
                                     </div>
                                 </div>
+                                {fieldError("slug") && (
+                                    <p className="mt-1.5 text-xs text-[var(--danger)] flex items-center gap-1">
+                                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                        {fieldError("slug")!.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         {/* Right Column: Business Type */}
                         <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">Business Type *</label>
+                            <label className={`block text-sm font-medium mb-3 ${fieldError("businessType") ? "text-[var(--danger)]" : "text-[var(--text-secondary)]"}`}>
+                                Business Type *
+                            </label>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {BUSINESS_TYPES.map((bt) => (
                                     <button
@@ -596,13 +658,19 @@ export default function DashboardPage() {
                                             ? "ring-2 ring-[var(--accent)] bg-[var(--accent-glow)]"
                                             : "bg-[var(--bg-card)]"
                                             }`}
-                                        style={{ border: config.businessType === bt.id ? "1px solid var(--accent)" : "1px solid var(--border-subtle)" }}
+                                        style={{ border: config.businessType === bt.id ? "1px solid var(--accent)" : fieldError("businessType") ? "1px solid var(--danger)" : "1px solid var(--border-subtle)" }}
                                     >
                                         <bt.icon className="w-5 h-5 text-[var(--accent)] mb-2" />
                                         <p className="text-xs font-medium text-[var(--text-primary)]">{bt.label}</p>
                                     </button>
                                 ))}
                             </div>
+                            {fieldError("businessType") && (
+                                <p className="mt-2 text-xs text-[var(--danger)] flex items-center gap-1">
+                                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    {fieldError("businessType")!.message}
+                                </p>
+                            )}
                         </div>
                     </div>
                 );
@@ -1268,8 +1336,8 @@ const reader = response.body.getReader();
                         </p>
                         <div className="flex gap-3">
                             <button
-                                onClick={handleQuickLaunch}
-                                disabled={loading || !config.businessName || !config.businessType || !slug || slugAvailable === false}
+                                onClick={handleQuickLaunchValidated}
+                                disabled={loading}
                                 className="btn-primary py-2.5 px-6 text-sm flex items-center gap-2 disabled:opacity-30"
                             >
                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
@@ -1337,6 +1405,24 @@ const reader = response.body.getReader();
                     </div>
                 )}
 
+                {/* Validation summary — shown when user attempts submit with missing fields */}
+                {showValidation && validationErrors.length > 0 && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl mb-6" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                        <AlertTriangle className="w-4 h-4 text-[var(--danger)] shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-sm font-semibold text-[var(--danger)] mb-1">Please complete the required fields:</p>
+                            <ul className="space-y-0.5">
+                                {validationErrors.map((e) => (
+                                    <li key={e.field} className="text-xs text-[var(--danger)] flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-[var(--danger)] shrink-0" />
+                                        {e.message}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
                 {/* Navigation */}
                 <div className="flex justify-between">
                     <button
@@ -1349,15 +1435,21 @@ const reader = response.body.getReader();
 
                     {step < STEPS.length - 1 ? (
                         <button
-                            onClick={() => setStep(step + 1)}
+                            onClick={() => {
+                                if (step === 0 && validationErrors.length > 0) {
+                                    setShowValidation(true);
+                                    return;
+                                }
+                                setStep(step + 1);
+                            }}
                             className="btn-primary py-3 px-6 flex items-center gap-2 text-sm"
                         >
                             Next <ChevronRight className="w-4 h-4" />
                         </button>
                     ) : (
                         <button
-                            onClick={handleSubmit}
-                            disabled={loading || !config.businessName || !config.businessType || !slug || slugAvailable === false}
+                            onClick={handleGenerateAttempt}
+                            disabled={loading}
                             className="btn-primary py-3 px-8 flex items-center gap-2 text-sm disabled:opacity-30"
                         >
                             <Zap className="w-4 h-4" />

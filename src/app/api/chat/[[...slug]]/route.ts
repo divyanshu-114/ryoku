@@ -9,7 +9,11 @@ export async function GET(
     { params }: { params: Promise<{ slug?: string[] }> }
 ) {
     const { slug: slugArray } = await params;
-    const slug = slugArray?.[0] || "athena";
+    const slug = slugArray?.[0];
+
+    if (!slug) {
+        return NextResponse.json({ error: "Missing business slug" }, { status: 400 });
+    }
 
     const [business] = await db
         .select()
@@ -40,9 +44,13 @@ export async function POST(
     { params }: { params: Promise<{ slug?: string[] }> }
 ) {
     const { slug: slugArray } = await params;
-    
-    const slug = slugArray?.[0] || "athena";
-    
+
+    const slug = slugArray?.[0];
+
+    if (!slug) {
+        return new Response(JSON.stringify({ error: "Missing business slug" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+
     console.log(`[API] POST hit for slug: ${slug}`);
     
     // Handle OPTIONS preflight
@@ -66,8 +74,12 @@ export async function DELETE(
     { params }: { params: Promise<{ slug?: string[] }> }
 ) {
     const { slug: slugArray } = await params;
-    const slug = slugArray?.[0] || "athena";
-    
+    const slug = slugArray?.[0];
+
+    if (!slug) {
+        return new Response(JSON.stringify({ error: "Missing business slug" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+
     // You can implement session cleanup logic in chat-handler.ts if needed
     return new Response(JSON.stringify({ success: true, slug }), { status: 200 });
 }

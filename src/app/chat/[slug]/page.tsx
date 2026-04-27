@@ -1,7 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from "react";
+import { DefaultChatTransport } from "ai";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -39,14 +40,18 @@ export default function ChatPage() {
         }
     }, []);
 
-    const apiTarget = slug ? `/api/chat/${slug}` : "/api/chat/athena";
+    const chatTransport = useMemo(
+        () => new DefaultChatTransport({
+            api: `/api/chat/${slug}`,
+            body: { conversationId, slug },
+        }),
+        [slug, conversationId]
+    );
 
     // Setup useChat to hit our specific route
     const { messages, status, error, regenerate, sendMessage } = useChat({
         id: conversationId,
-        // @ts-expect-error api is incorrectly missing from UseChatOptions type in this version
-        api: apiTarget,
-        body: { conversationId, slug },
+        transport: chatTransport,
     });
 
     // Fallback to reload if regenerate is not available
@@ -413,7 +418,7 @@ export default function ChatPage() {
     };
 
     return (
-        <main key={slug || "athena"} className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
+        <main key={slug} className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
             {/* Header */}
             <header
                 className="flex items-center gap-3 px-4 py-4 sm:px-6 sm:py-5 shrink-0 backdrop-blur-xl sticky top-0 z-50 transition-all duration-300"

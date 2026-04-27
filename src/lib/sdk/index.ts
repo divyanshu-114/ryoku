@@ -76,7 +76,7 @@ export class RyokuChat {
             const response = await fetch(`${this.baseUrl}/api/chat/${slug}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages, id: session.id }),
+                body: JSON.stringify({ messages, conversationId: session.id }),
             });
 
             if (!response.ok) {
@@ -110,14 +110,18 @@ export class RyokuChat {
                                 for (const line of lines) {
                                     if (!line.trim()) continue;
                                     
-                                    // Vercel AI SDK format: 0:"text"
-                                    const sseMatch = line.match(/^(\d+):"([^"]*)"$/);
-                                    if (sseMatch) {
-                                        const text = sseMatch[2];
-                                        fullText += text;
-                                        onMessage?.(text);
-                                        controller.enqueue(text);
-                                        continue;
+                                    // Vercel AI SDK data stream format: 0:"json-encoded-text"
+                                    const colonIdx = line.indexOf(":");
+                                    if (colonIdx !== -1 && /^\d+$/.test(line.slice(0, colonIdx))) {
+                                        try {
+                                            const parsed = JSON.parse(line.slice(colonIdx + 1));
+                                            if (typeof parsed === "string") {
+                                                fullText += parsed;
+                                                onMessage?.(parsed);
+                                                controller.enqueue(parsed);
+                                                continue;
+                                            }
+                                        } catch { }
                                     }
                                     
                                     // JSON format
@@ -194,12 +198,12 @@ export class RyokuChat {
             return () => {};
         }
 
-        const channel = this.pusher.subscribe(`conversation-${conversationId}`);
+        const channel = this.pusher.subscribe(`private-conversation-${conversationId}`);
         channel.bind(event, callback);
         
         const unsubscribe = () => {
             channel.unbind(event, callback);
-            this.pusher?.unsubscribe(`conversation-${conversationId}`);
+            this.pusher?.unsubscribe(`private-conversation-${conversationId}`);
         };
 
         this.unsubscribeCallbacks.push(unsubscribe);

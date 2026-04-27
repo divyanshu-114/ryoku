@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { businesses, conversations, messages } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { triggerConversationUpdated } from "@/lib/pusher-server";
 
 // GET /api/conversations/[id] — Get single conversation with messages
 export async function GET(
@@ -89,6 +90,14 @@ export async function PATCH(
             eq(conversations.id, id),
             eq(conversations.businessId, business.id)
         ));
+
+    // Notify both the agent queue and the customer chat in real-time
+    if (body.status || body.assignedAgent !== undefined) {
+        await triggerConversationUpdated(business.id, id, {
+            status: body.status ?? updates.status,
+            assignedAgent: body.assignedAgent ?? null,
+        }).catch(() => {});
+    }
 
     return NextResponse.json({ success: true });
 }

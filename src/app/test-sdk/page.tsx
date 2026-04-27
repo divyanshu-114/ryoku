@@ -6,6 +6,7 @@ import { RyokuSDK } from "@/lib/sdk/public";
 export default function TestSDKPage() {
     const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
     const [input, setInput] = useState("");
+    const [slug, setSlug] = useState("");
     const [status, setStatus] = useState("Idle");
     const [error, setError] = useState("");
     const sdkRef = useRef<RyokuSDK | null>(null);
@@ -15,18 +16,18 @@ export default function TestSDKPage() {
     }, []);
 
     const handleChat = async () => {
-        if (!sdkRef.current) return;
-        
+        if (!sdkRef.current || !slug.trim()) return;
+
         setStatus("Streaming...");
         setError("");
-        
+
         const newMessages = [...messages, { role: "user", content: input }];
         setMessages(newMessages);
         setInput("");
 
         try {
             await sdkRef.current.chat({
-                slug: "athena",
+                slug: slug.trim(),
                 messages: newMessages as any,
                 onMessage: (delta) => {
                     setMessages(prev => {
@@ -54,15 +55,15 @@ export default function TestSDKPage() {
     };
 
     const handleOffline = async () => {
-        if (!sdkRef.current) return;
-        
+        if (!sdkRef.current || !slug.trim()) return;
+
         setStatus("Sending Offline...");
         setError("");
         try {
             const res = await sdkRef.current.sendOfflineQuery({
-                slug: "athena",
+                slug: slug.trim(),
                 name: "SDK Tester",
-                email: "trishitofficial@gmail.com",
+                email: "test@example.com",
                 query: "Testing SDK offline query"
             });
             if (res.success) setStatus("Offline Sent!");
@@ -75,7 +76,17 @@ export default function TestSDKPage() {
     return (
         <div className="p-10 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">Ryoku SDK Test Page</h1>
-            
+
+            <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Business Slug</label>
+                <input
+                    className="w-full border p-2 rounded"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="your-business-slug"
+                />
+            </div>
+
             <div className="mb-4 p-4 bg-gray-100 rounded">
                 <p><strong>Status:</strong> {status}</p>
                 {error && <p className="text-red-500"><strong>Error:</strong> {error}</p>}

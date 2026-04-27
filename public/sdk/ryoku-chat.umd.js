@@ -102,7 +102,7 @@
     var resp = await fetch(this.baseUrl + '/api/chat/' + slug, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages, id: session.id })
+      body: JSON.stringify({ messages: messages, conversationId: session.id })
     });
 
     if (!resp.ok) {
@@ -134,13 +134,18 @@
               var line = lines[i].trim();
               if (!line) continue;
 
-              // Vercel AI SDK: 0:"text"
-              var m = line.match(/^(\d+):"([^"]*)"$/);
-              if (m) {
-                fullText += m[2];
-                onMessage(m[2]);
-                controller.enqueue(m[2]);
-                continue;
+              // Vercel AI SDK data stream format: 0:"json-encoded-text"
+              var colonIdx = line.indexOf(':');
+              if (colonIdx !== -1 && /^\d+$/.test(line.slice(0, colonIdx))) {
+                try {
+                  var parsed = JSON.parse(line.slice(colonIdx + 1));
+                  if (typeof parsed === 'string') {
+                    fullText += parsed;
+                    onMessage(parsed);
+                    controller.enqueue(parsed);
+                    continue;
+                  }
+                } catch(e) {}
               }
 
               // JSON: data: {"type":"text-delta","delta":"..."}
@@ -216,12 +221,12 @@
       return function() {};
     }
     
-    var ch = this.pusher.subscribe('conversation-' + convoId);
+    var ch = this.pusher.subscribe('private-conversation-' + convoId);
     ch.bind(event, callback);
-    
+
     var unsub = function() {
       ch.unbind(event, callback);
-      self.pusher && self.pusher.unsubscribe('conversation-' + convoId);
+      self.pusher && self.pusher.unsubscribe('private-conversation-' + convoId);
     };
     
     this.unsubscribeCallbacks.push(unsub);
