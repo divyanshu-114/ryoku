@@ -9,6 +9,9 @@ Ryoku is an AI customer-support operating system for small and growing businesse
 
 The project is a Next.js App Router application with Auth.js, Neon Postgres, Drizzle ORM, Upstash Redis rate limiting, Pusher realtime events, Groq chat models, Google embeddings, and Resend email.
 
+<img width="1512" height="982" alt="Screenshot 2026-04-27 at 7 27 43 AM" src="https://github.com/user-attachments/assets/e96ba3b7-a47e-4561-aad2-7fbd892fcfa1" />
+
+
 Live demo: https://ryoku-iota.vercel.app
 
 ## Why Ryoku Is Useful
