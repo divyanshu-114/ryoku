@@ -37,7 +37,7 @@ export const pusherServer = new Proxy({} as Pusher, {
 
 export const PUSHER_EVENTS = {
     NEW_MESSAGE: "new-message",
-    TYPING: "client-typing",
+    TYPING: "server-typing",
     CONVERSATION_UPDATED: "conversation-updated",
     AGENT_STATUS: "agent-status",
     NEW_CONVERSATION: "new-conversation",

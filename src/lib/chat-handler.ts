@@ -1,7 +1,7 @@
 import { streamText, tool } from "ai";
 import { db } from "@/lib/db";
 import { businesses, conversations, messages as dbMessages, analyticsEvents } from "@/lib/db/schema";
-import { triggerConversationMessage, triggerNewConversation, pusherServer, PUSHER_EVENTS } from "@/lib/pusher-server";
+import { triggerConversationMessage, triggerNewConversation } from "@/lib/pusher-server";
 import { withRetry, generateEmbedding } from "@/lib/ai-provider";
 import { analyzeSentiment, trackKnowledgeGap, logAnalyticsEvent } from "@/lib/intelligence";
 import {
@@ -16,6 +16,33 @@ import { searchWeb, fetchPage } from "@/lib/web-tools";
 import { eq, sql, and } from "drizzle-orm";
 import { getBusinessPlan } from "@/lib/billing";
 import { z } from "zod";
+
+const WAIT_MESSAGE = "An agent will be with you shortly. Please hold on.";
+
+async function makeWaitResponse(conversationId: string): Promise<Response> {
+    const [savedBotMsg] = await db.insert(dbMessages).values({
+        conversationId,
+        role: "assistant",
+        content: WAIT_MESSAGE,
+    }).returning();
+
+    await triggerConversationMessage(conversationId, {
+        id: savedBotMsg.id,
+        role: "assistant",
+        content: WAIT_MESSAGE,
+    });
+
+    return new Response(
+        `0:${JSON.stringify(WAIT_MESSAGE)}\nd:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`,
+        {
+            headers: {
+                "Content-Type": "text/plain; charset=utf-8",
+                "x-vercel-ai-data-stream": "v1",
+                "Access-Control-Allow-Origin": "*",
+            },
+        }
+    );
+}
 
 export async function handleChatPOST(
     req: Request,
@@ -81,15 +108,20 @@ export async function handleChatPOST(
                     .where(eq(conversations.id, conversationId))
                     .limit(1);
 
+                // Detect escalation request before branch so both paths can use it
+                const isEscalationRequest = userMessage === "I would like to speak to a human agent, please.";
+
                 if (existing.length === 0) {
                     await db.insert(conversations).values({
                         id: conversationId,
                         businessId: business.id,
+                        // If the very first message is an escalation, mark it directly
+                        status: isEscalationRequest ? "escalated" : "active",
                     });
 
                     await db.insert(analyticsEvents).values({
                         businessId: business.id,
-                        event: "chat_started",
+                        event: isEscalationRequest ? "escalated" : "chat_started",
                         data: { conversationId },
                     });
 
@@ -97,19 +129,32 @@ export async function handleChatPOST(
                         id: conversationId,
                         customerName: "Anonymous",
                         customerEmail: null,
-                        status: "active",
+                        status: isEscalationRequest ? "escalated" : "active",
                         assignedAgent: null,
                         messageCount: 1,
                         lastMessage: { role: "user", content: userMessage, createdAt: new Date().toISOString() },
                         updatedAt: new Date().toISOString(),
                     });
+
+                    if (isEscalationRequest) {
+                        const [savedUserMsg] = await db.insert(dbMessages).values({
+                            conversationId,
+                            role: "user",
+                            content: userMessage,
+                        }).returning();
+                        await triggerConversationMessage(conversationId, {
+                            id: savedUserMsg.id,
+                            role: "user",
+                            content: userMessage,
+                        });
+                        return makeWaitResponse(conversationId);
+                    }
                 } else {
                     await db.update(conversations)
                         .set({ updatedAt: new Date() })
                         .where(eq(conversations.id, conversationId));
 
                     // ── Agent Takeover / Escalation Check ──
-                    const isEscalationRequest = userMessage === "I would like to speak to a human agent, please.";
                     if (existing[0].assignedAgent || existing[0].status === "escalated" || isEscalationRequest) {
                         const [savedUserMsg] = await db.insert(dbMessages).values({
                             conversationId,
@@ -123,32 +168,18 @@ export async function handleChatPOST(
                             content: userMessage,
                         });
 
-                        if (isEscalationRequest && existing[0].status === "escalated") {
-                            await pusherServer.trigger(`private-conversation-${conversationId}`, PUSHER_EVENTS.TYPING, { role: "assistant" });
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            const waitMessage = "please wait for some time for an agent to join";
-                            
-                            const [savedBotMsg] = await db.insert(dbMessages).values({
-                                conversationId,
-                                role: "assistant",
-                                content: waitMessage,
-                            }).returning();
-
-                            await triggerConversationMessage(conversationId, {
-                                id: savedBotMsg.id,
-                                role: "assistant",
-                                content: waitMessage,
-                            });
-
-                            return new Response(`0:${JSON.stringify(waitMessage)}\nd:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`, {
-                                headers: {
-                                    "Content-Type": "text/plain; charset=utf-8",
-                                    "x-vercel-ai-data-stream": "v1",
-                                    "Access-Control-Allow-Origin": "*",
-                                }
-                            });
+                        if (isEscalationRequest) {
+                            // Ensure conversation is marked escalated even if the escalation
+                            // API call raced or the conversation was freshly created
+                            if (existing[0].status !== "escalated") {
+                                await db.update(conversations)
+                                    .set({ status: "escalated" })
+                                    .where(eq(conversations.id, conversationId));
+                            }
+                            return makeWaitResponse(conversationId);
                         }
 
+                        // Agent has taken over — return empty stream so the chat stays silent
                         return new Response("0:\"\"\n", {
                             headers: {
                                 "Content-Type": "text/plain; charset=utf-8",
